@@ -44,10 +44,13 @@
 /// that it is ready to be used immediately.
 /// Use perse_DestroyWidget() to get rid of unneeded widgets.
 /// @return Pointer to new widget.
-perse_type_t* perse_AllocateWidget() {
-	perse_type_t* widget = calloc(1, sizeof(widget));
-	
-	// TODO: set default values
+perse_widget_t* perse_AllocateWidget() {
+	perse_widget_t* widget = calloc(1, sizeof(widget));
+
+	widget->constraint_size.min_w = -1;
+	widget->constraint_size.min_h = -1;
+	widget->constraint_size.max_w = -1;
+	widget->constraint_size.max_h = -1;
 	
 	return widget;
 }
@@ -58,7 +61,7 @@ perse_type_t* perse_AllocateWidget() {
 /// All of the properties of the widget and its children will be destroyed as
 /// well. If you don't want the children to be destroyed, set their parent to 
 /// NULL or some other widget.
-void perse_DestroyWidget(perse_type_t* widget) {
+void perse_DestroyWidget(perse_widget_t* widget) {
 	// TODO: call into backend to clean up the widget on their side
 	
 	// TODO: delete all properties

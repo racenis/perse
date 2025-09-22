@@ -9,7 +9,7 @@ typedef enum {
 } perse_type_t;
 
 typedef enum {
-	PERSE_NAME_
+	PERSE_NAME_INVALID = 0
 } perse_name_t;
 
 typedef struct perse_property {
@@ -18,18 +18,18 @@ typedef struct perse_property {
 	
 	union {
 		int integer;
-		int boolean;
+		char boolean;
 		char* string;
 	};
 	
 	struct perse_property* next;
 } perse_property_t;
 
-perse_type_t* perse_AllocateProperty();
-void perse_DestroyProperty(perse_type_t*);
+perse_property_t* perse_AllocateProperty();
+void perse_DestroyProperty(perse_property_t*);
 
-perse_type_t* perse_CreatePropertyInteger(int);
-perse_type_t* perse_CreatePropertyBoolean(int);
-perse_type_t* perse_CreatePropertyString(const char*);
+perse_property_t* perse_CreatePropertyInteger(int);
+perse_property_t* perse_CreatePropertyBoolean(char);
+perse_property_t* perse_CreatePropertyString(const char*);
 
 #endif // PERSE_PROPERTY_H

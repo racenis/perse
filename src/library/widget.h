@@ -37,9 +37,9 @@ typedef struct perse_widget {
 	struct perse_widget* next;		//< next sibling
 } perse_widget_t;
 
-perse_type_t* perse_AllocateWidget();
-void perse_DestroyWidget(perse_type_t*);
+perse_widget_t* perse_AllocateWidget();
+void perse_DestroyWidget(perse_widget_t*);
 
-void perse_SetWidgetParent(perse_property_t* widget, perse_property_t* parent);
+void perse_SetWidgetParent(perse_widget_t* widget, perse_widget_t* parent);
 
 #endif // PERSE_WIDGET_H
