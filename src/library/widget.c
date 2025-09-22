@@ -52,6 +52,9 @@ perse_widget_t* perse_AllocateWidget() {
 	widget->constraint_size.max_w = -1;
 	widget->constraint_size.max_h = -1;
 	
+	widget->changed = 1;
+	widget->key = -1;
+	
 	return widget;
 }
 
@@ -106,6 +109,8 @@ void perse_SetParent(perse_widget_t* widget, perse_widget_t* parent) {
 			} else {
 				parent->child = widget->next;
 			}
+		} else if (sibling == widget) {
+			parent->child = widget->next;
 		} else {
 			// splice out the widget
 			sibling->next = widget->next;
@@ -121,8 +126,17 @@ void perse_SetParent(perse_widget_t* widget, perse_widget_t* parent) {
 	widget->parent = parent;
 }
 
-void perse_SetProperty(perse_widget_t* widget, perse_property_t* property) {
+void perse_AddProperty(perse_widget_t* widget, perse_property_t* property) {
 	property->next = widget->property;
 	widget->property = property;
 }
 
+void perse_RemoveProperty(perse_widget_t* widget, perse_property_t* property) {
+	perse_property_t* prev = widget->property;
+	while (prev && prev->next != property) prev = prev->next;
+	if (prev == property) {
+		widget->property = property->next;
+	} else if (prev) {
+		prev->next = property->next;
+	}
+}

@@ -8,4 +8,6 @@ add_library(perse STATIC
     property.c
     widget.h
     widget.c
+	layout.h
+	layout.c
 )

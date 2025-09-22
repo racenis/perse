@@ -21,10 +21,8 @@ perse_property_t* perse_AllocateProperty() {
 	return calloc(1, sizeof(perse_property_t));
 }
 
-/// Destroys a property.
-/// To be used for destroying properties created by perse_AllocateProperty() or
-/// other property creation functions.
-void perse_DestroyProperty(perse_property_t* property) {
+// Removes any attached data.
+static void clean_property(perse_property_t* property) {
 	switch (property->type) {
 		case PERSE_TYPE_STRING:
 			free(property->string);
@@ -32,6 +30,13 @@ void perse_DestroyProperty(perse_property_t* property) {
 		default:
 			break;
 	}
+}
+
+/// Destroys a property.
+/// To be used for destroying properties created by perse_AllocateProperty() or
+/// other property creation functions.
+void perse_DestroyProperty(perse_property_t* property) {
+	clean_property(property);
 	
 	memset(property, 0, sizeof(property));
 	free(property);
@@ -78,4 +83,42 @@ perse_property_t* perse_CreatePropertyString(const char* string) {
 	strcpy(property->string, string);
 	
 	return property;
+}
+
+void perse_CopyPropertyValue(perse_property_t* dst, perse_property_t* src) {
+	clean_property(dst);
+	
+	switch (src->type) {
+		case PERSE_TYPE_INTEGER:
+			dst->integer = src->integer;
+			break;
+		case PERSE_TYPE_BOOLEAN:
+			dst->boolean = src->boolean;
+			break;
+		case PERSE_TYPE_STRING:
+			dst->string = malloc(strlen(src->string) + 1);
+			strcpy(dst->string, src->string);
+			break;
+		default:
+			break;
+	}
+	
+	dst->type = src->type;
+	dst->changed = 1;
+}
+
+int perse_IsPropertyMatching(perse_property_t* p1, perse_property_t* p2) {
+	if (p1->type != p2->type) return 0;
+	switch (p1->type) {
+		case PERSE_TYPE_INVALID:
+			return 1;
+		case PERSE_TYPE_INTEGER:
+			return p1->integer == p2->integer;
+		case PERSE_TYPE_BOOLEAN:
+			return p1->boolean == p2->boolean;
+		case PERSE_TYPE_STRING:
+			return strcmp(p1->string, p2->string) == 0;
+		default:
+			return 0;
+	}
 }

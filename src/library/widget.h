@@ -24,11 +24,14 @@ typedef struct perse_widget {
 	void* system;					//< pointer to win32/motif widget
 	void* data;						//< additional pointer for backend
 	
+	int key;						//< optional layout key
+	
 	perse_size_t constraint_size;	//< min/max size for layout
 	perse_size_t want_size;			//< for layout calculation
 	perse_size_t current_size;		//< size calculated by layout
 	perse_size_t actual_size;		//< size in backend
 	
+	char changed;					//< if needs layout recalculation
 	
 	struct perse_widget* parent;	//< parent widget
 	struct perse_widget* child;		//< first child 
@@ -41,6 +44,8 @@ perse_widget_t* perse_AllocateWidget();
 void perse_DestroyWidget(perse_widget_t*);
 
 void perse_SetParent(perse_widget_t* widget, perse_widget_t* parent);
-void perse_SetProperty(perse_widget_t* widget, perse_property_t* property);
+
+void perse_AddProperty(perse_widget_t* widget, perse_property_t* property);
+void perse_RemoveProperty(perse_widget_t* widget, perse_property_t* property);
 
 #endif // PERSE_WIDGET_H

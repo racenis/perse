@@ -16,6 +16,8 @@ typedef struct perse_property {
 	perse_name_t name;
 	perse_type_t type;
 	
+	char changed;
+	
 	union {
 		int integer;
 		char boolean;
@@ -31,5 +33,8 @@ void perse_DestroyProperty(perse_property_t*);
 perse_property_t* perse_CreatePropertyInteger(int);
 perse_property_t* perse_CreatePropertyBoolean(char);
 perse_property_t* perse_CreatePropertyString(const char*);
+
+void perse_CopyPropertyValue(perse_property_t*, perse_property_t*);
+int perse_IsPropertyMatching(perse_property_t*, perse_property_t*);
 
 #endif // PERSE_PROPERTY_H
