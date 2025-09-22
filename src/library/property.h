@@ -2,15 +2,22 @@
 #define PERSE_PROPERTY_H
 
 typedef enum {
-	PERSE_TYPE_INVALID = 0,	//< default widget type on allocation
-	PERSE_TYPE_INTEGER = 1,	//< same as C int type
-	PERSE_TYPE_BOOLEAN = 2,	//< same as C bool type
-	PERSE_TYPE_STRING = 3,	//< same as C char* type
+	PERSE_TYPE_INVALID = 0,			//< default widget type on allocation
+	PERSE_TYPE_INTEGER = 1,			//< same as C int type
+	PERSE_TYPE_BOOLEAN = 2,			//< same as C bool type
+	PERSE_TYPE_STRING = 3,			//< same as C char* type
+	PERSE_TYPE_STRING_ARRAY	= 4,	//< null-terminated char* array
+	PERSE_TYPE_CALLBACK = 5,		//< callback function pointer
+	PERSE_TYPE_CALLBACK_ARRAY = 6,	//< null-terminated function pointer array
+	PERSE_TYPE_POINTER = 7,			//< same as C void* type
+	PERSE_TYPE_POINTER_ARRAY = 8,	//< null-terminated void* array
 } perse_type_t;
 
 typedef enum {
 	PERSE_NAME_INVALID = 0
 } perse_name_t;
+
+typedef struct perse_widget perse_widget_t;
 
 typedef struct perse_property {
 	perse_name_t name;
@@ -22,6 +29,11 @@ typedef struct perse_property {
 		int integer;
 		char boolean;
 		char* string;
+		char** string_array;
+		void (*callback)(perse_widget_t*);
+		void (**callback_array)(perse_widget_t*);
+		void* pointer;
+		void** pointer_array;
 	};
 	
 	struct perse_property* next;
