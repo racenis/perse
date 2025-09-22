@@ -274,13 +274,13 @@ void perse_CalculateLayout(perse_widget_t* widget) {
 static void apply_changes(perse_widget_t* widget, char recalc_pos) {
 	char update_size = 0;
 	
-	if (widget.actual_size.w != widget.current_size.w) {
-		widget.actual_size.w = widget.current_size.w;
+	if (widget->actual_size.w != widget->current_size.w) {
+		widget->actual_size.w = widget->current_size.w;
 		recalc_pos = 1;
 	}
 	
-	if (widget.actual_size.h != widget.current_size.h) {
-		widget.actual_size.h = widget.current_size.h;
+	if (widget->actual_size.h != widget->current_size.h) {
+		widget->actual_size.h = widget->current_size.h;
 		recalc_pos = 1;
 	}
 	
@@ -298,5 +298,5 @@ static void apply_changes(perse_widget_t* widget, char recalc_pos) {
 }
 
 void perse_ApplyChanges(perse_widget_t* widget) {
-	apply_changes(widget);
+	apply_changes(widget, 0);
 }
