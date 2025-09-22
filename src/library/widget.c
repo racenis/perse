@@ -1,5 +1,7 @@
 #include "widget.h"
 
+#include "backend.h"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -88,6 +90,10 @@ void perse_DestroyWidget(perse_widget_t* widget) {
 		perse_property_t* next = property->next;
 		perse_DestroyProperty(property);
 		property = next;
+	}
+	
+	if (widget->system) {
+		perse_BackendDestroyWidget(widget);
 	}
 	
 	memset(widget, 0, sizeof(widget));

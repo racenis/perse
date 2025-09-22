@@ -1,5 +1,7 @@
 #include "layout.h"
 
+#include "backend.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -285,14 +287,14 @@ static void apply_changes(perse_widget_t* widget, char recalc_pos) {
 	}
 	
 	if (!widget->system) {
-		// TODO: create new backend widget
+		perse_BackendCreateWidget(widget);
 	} else if (recalc_pos) {
-		// TODO: update widget position and size
+		perse_BackendSetSizePos(widget);
 	}
 	
 	for (perse_property_t* p = widget->property; p; p = p->next) {
 		if (!p->changed) continue;
-		// TODO: pass property to backend
+		perse_BackendSetProperty(widget, p);
 		p->changed = 0;
 	}
 }

@@ -10,4 +10,6 @@ add_library(perse STATIC
     widget.c
 	layout.h
 	layout.c
+	backend.h
+	backend.c
 )
