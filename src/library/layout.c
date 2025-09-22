@@ -241,12 +241,34 @@ static void calculate_size(perse_widget_t* widget) {
 	}
 }
 
+static void calculate_position(perse_widget_t* widget) {
+	
+	// child position is determined by their parent, if reached leaf, return
+	if (!widget->child) return;
+	
+	// for each child, calculate their SIZE based on their WANT
+	switch (widget->type) {
+		// default layout -- stack widgets vertically
+		default: {
+			int current_h = 0;
+			for (perse_widget_t* w = widget->child; w; w = w->next) {
+				int offset = widget->current_size.w - w->constraint_size.min.w;
+
+				if (offset != 0 && offset/2 > 0) {
+					widget->position.x = offset/2;
+				}
+				
+				w->position.y = current_h;
+				current_h += w->current_size.h;
+			}
+		}
+	}
+}
+
 void perse_CalculateLayout(perse_widget_t* widget) {
 	calculate_want(widget);
 	calculate_size(widget);
-	// 1. recursively calculate want sizes
-	// 2. recursively set concrete sizes
-	// 3. figure out xy coords
+	calculate_position(widget);
 }
 
 void perse_ApplyChanges(perse_widget_t* widget) {
