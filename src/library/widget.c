@@ -37,6 +37,8 @@
 	
 	Simply add your widget type to `perse_widget_type_t` enum. Consider also
 	adding a widget construction function.
+	You will also need to add widget to layout calculation code and in the 
+	backends, if needed.
 */
 
 /// Allocates a new widget.
@@ -47,10 +49,10 @@
 perse_widget_t* perse_AllocateWidget() {
 	perse_widget_t* widget = calloc(1, sizeof(widget));
 
-	widget->constraint_size.min_w = -1;
-	widget->constraint_size.min_h = -1;
-	widget->constraint_size.max_w = -1;
-	widget->constraint_size.max_h = -1;
+	widget->constraint_size.min.w = -1;
+	widget->constraint_size.min.h = -1;
+	widget->constraint_size.max.w = -1;
+	widget->constraint_size.max.h = -1;
 	
 	widget->changed = 1;
 	widget->key = -1;

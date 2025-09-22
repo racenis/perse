@@ -15,8 +15,16 @@ typedef enum {
 } perse_widget_type_t;
 
 typedef struct {
-	int min_w, min_h, max_w, max_h;
+	int w, h;
 } perse_size_t;
+
+typedef struct {
+	int x, y;
+} perse_position_t;
+
+typedef struct {
+	perse_size_t min, max;
+} perse_range_t;
 
 typedef struct perse_widget {
 	perse_widget_type_t type;		//< type of the widget
@@ -26,10 +34,12 @@ typedef struct perse_widget {
 	
 	int key;						//< optional layout key
 	
-	perse_size_t constraint_size;	//< min/max size for layout
-	perse_size_t want_size;			//< for layout calculation
+	perse_range_t constraint_size;	//< min/max size for layout
+	perse_range_t want_size;		//< for layout calculation
 	perse_size_t current_size;		//< size calculated by layout
 	perse_size_t actual_size;		//< size in backend
+	
+	perse_position_t position;		//< position on screen
 	
 	char changed;					//< if needs layout recalculation
 	
