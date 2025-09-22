@@ -271,6 +271,32 @@ void perse_CalculateLayout(perse_widget_t* widget) {
 	calculate_position(widget);
 }
 
-void perse_ApplyChanges(perse_widget_t* widget) {
+static void apply_changes(perse_widget_t* widget, char recalc_pos) {
+	char update_size = 0;
 	
+	if (widget.actual_size.w != widget.current_size.w) {
+		widget.actual_size.w = widget.current_size.w;
+		recalc_pos = 1;
+	}
+	
+	if (widget.actual_size.h != widget.current_size.h) {
+		widget.actual_size.h = widget.current_size.h;
+		recalc_pos = 1;
+	}
+	
+	if (!widget->system) {
+		// TODO: create new backend widget
+	} else if (recalc_pos) {
+		// TODO: update widget position and size
+	}
+	
+	for (perse_property_t* p = widget->property; p; p = p->next) {
+		if (!p->changed) continue;
+		// TODO: pass property to backend
+		p->changed = 0;
+	}
+}
+
+void perse_ApplyChanges(perse_widget_t* widget) {
+	apply_changes(widget);
 }

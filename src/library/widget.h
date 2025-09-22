@@ -31,6 +31,7 @@ typedef struct perse_widget {
 	
 	void* system;					//< pointer to win32/motif widget
 	void* data;						//< additional pointer for backend
+	void* user;						//< pointer for user to set
 	
 	int key;						//< optional layout key
 	
