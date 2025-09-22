@@ -33,13 +33,14 @@ typedef struct perse_widget {
 	struct perse_widget* parent;	//< parent widget
 	struct perse_widget* child;		//< first child 
 	
-	perse_property_t* properties;	//< list of widget's properties
+	perse_property_t* property;		//< list of widget's properties
 	struct perse_widget* next;		//< next sibling
 } perse_widget_t;
 
 perse_widget_t* perse_AllocateWidget();
 void perse_DestroyWidget(perse_widget_t*);
 
-void perse_SetWidgetParent(perse_widget_t* widget, perse_widget_t* parent);
+void perse_SetParent(perse_widget_t* widget, perse_widget_t* parent);
+void perse_SetProperty(perse_widget_t* widget, perse_property_t* property);
 
 #endif // PERSE_WIDGET_H

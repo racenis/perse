@@ -64,9 +64,65 @@ perse_widget_t* perse_AllocateWidget() {
 void perse_DestroyWidget(perse_widget_t* widget) {
 	// TODO: call into backend to clean up the widget on their side
 	
-	// TODO: delete all properties
-	// TODO: delete all children
+	if (widget->parent) {
+		perse_SetParent(widget, NULL);
+	}
+	
+	for (perse_widget_t* child = widget->child; child;) {
+		perse_widget_t* next = child->next;
+		// at this point the child list is partially destroyed and so calling
+		// perse_SetParent() with a NULL parent will segfault the program, so we
+		// make sure that it won't be called
+		child->parent = NULL;
+		
+		perse_DestroyWidget(child);
+		child = next;
+	}
+	
+	for (perse_property_t* property = widget->property; property;) {
+		perse_property_t* next = property->next;
+		perse_DestroyProperty(property);
+		property = next;
+	}
 	
 	memset(widget, 0, sizeof(widget));
 	free(widget);
 }
+
+/// Sets the parent of a widget.
+/// If a widget already has a parent, the widget will be removed from that
+/// parent's children.
+/// If `parent` is set to NULL, the widget will become parentless.
+void perse_SetParent(perse_widget_t* widget, perse_widget_t* parent) {
+	if (widget->parent) {
+		// find sibling in parent's list before widget
+		perse_widget_t* sibling = widget->parent->child;
+		while (sibling && sibling->next != widget) sibling = sibling->next;
+		
+		// no such sibling
+		if (!sibling) {
+			if (parent->child != widget) {
+				// shouldn't happen
+			} else {
+				parent->child = widget->next;
+			}
+		} else {
+			// splice out the widget
+			sibling->next = widget->next;
+		}
+	}
+	
+	// insert widget in front of parent's other children 
+	if (parent) {
+		widget->next = parent->child;
+		parent->child = widget;
+	}
+	
+	widget->parent = parent;
+}
+
+void perse_SetProperty(perse_widget_t* widget, perse_property_t* property) {
+	property->next = widget->property;
+	widget->property = property;
+}
+
