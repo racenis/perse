@@ -67,7 +67,9 @@ typedef struct perse_widget {
 	perse_size_t current_size;		//< size calculated by layout
 	perse_size_t actual_size;		//< size in backend
 	
-	perse_position_t position;		//< position on screen
+	perse_position_t position;		//< relative position to parent
+	perse_position_t absolute;		//< relative position to window
+	perse_position_t actual_pos;	//< actual position of the widget
 	
 	char changed;					//< if needs layout recalculation
 	
