@@ -160,27 +160,25 @@ static void calculate_want(perse_widget_t* widget) {
 	// otherwise we calculate the want size
 	switch (widget->type) {
 		case PERSE_WIDGET_HORIZONTAL_LAYOUT: {
-			// min width -> largest child min width
-			// min height -> sum of child min height
+			// min height -> largest child min height
+			// min width -> sum of child min width
 			int largest_min = -1;
-			int height_sum = 0;
-			
-			// TODO: switch to horizontal layout
-			
+			int width_sum = 0;
+	
 			for (perse_widget_t* c = widget->child; c; c = c->next) {
-				if (c->constraint_size.min.w > largest_min) {
-					largest_min = c->constraint_size.min.w;
+				if (c->constraint_size.min.h > largest_min) {
+					largest_min = c->constraint_size.min.h;
 				}
-				if (c->constraint_size.min.h > 0) {
-					height_sum += c->constraint_size.min.h;
+				if (c->constraint_size.min.w > 0) {
+					width_sum += c->constraint_size.min.w;
 				}
 			}
 			
-			widget->want_size.min.w = largest_min;
-			widget->want_size.min.h = height_sum;
+			widget->want_size.min.h = largest_min;
+			widget->want_size.min.w = width_sum;
 			
-			widget->want_size.max.w = widget->constraint_size.max.w;
 			widget->want_size.max.h = widget->constraint_size.max.h;
+			widget->want_size.max.w = widget->constraint_size.max.w;
 		} break;
 		
 		case PERSE_WIDGET_VERTICAL_LAYOUT: {
@@ -213,25 +211,20 @@ static void calculate_want(perse_widget_t* widget) {
 		
 		case PERSE_WIDGET_ABSOLUTE_LAYOUT:
 		default: {
-			// min width -> largest child min width
-			// min height -> sum of child min height
-			int largest_min = -1;
-			int height_sum = 0;
-			
-			// TODO: convert to ??
-			// just do both min of x and y!!
+			int min_width = -1;
+			int min_height = -1;
 			
 			for (perse_widget_t* c = widget->child; c; c = c->next) {
-				if (c->constraint_size.min.w > largest_min) {
-					largest_min = c->constraint_size.min.w;
+				if (c->constraint_size.min.w > min_width) {
+					min_width = c->constraint_size.min.w;
 				}
-				if (c->constraint_size.min.h > 0) {
-					height_sum += c->constraint_size.min.h;
+				if (c->constraint_size.min.h > min_height) {
+					min_height = c->constraint_size.min.h;
 				}
 			}
 			
-			widget->want_size.min.w = largest_min;
-			widget->want_size.min.h = height_sum;
+			widget->want_size.min.w = min_width;
+			widget->want_size.min.h = min_height;
 			
 			widget->want_size.max.w = widget->constraint_size.max.w;
 			widget->want_size.max.h = widget->constraint_size.max.h;
@@ -252,49 +245,43 @@ static void calculate_size(perse_widget_t* widget) {
 	// for each child, calculate their SIZE based on their WANT
 	switch (widget->type) {
 		case PERSE_WIDGET_HORIZONTAL_LAYOUT: {
-			
-			
-			// TODO: switch this to doing stuff horizontally
-			
-			
-			
 			// first we'll try to divide the height equally
 			int widgets = 0;
 			for (perse_widget_t* w = widget->child; w; w = w->next) widgets++;
-			int average_size = widget->current_size.h / widgets;
+			int average_size = widget->current_size.w / widgets;
 			
 			// then we'll see if any widget doesn't like that height
-			int used_height = 0;
+			int used_width = 0;
 			int widgets_left = 0;
 			for (perse_widget_t* w = widget->child; w; w = w->next) {
-				if (w->want_size.max.h < average_size) {
-					w->current_size.h = w->want_size.max.h;
-					used_height += w->want_size.max.h;
-				} else if (w->want_size.min.h > average_size) {
-					w->current_size.h = w->want_size.min.h;
-					used_height += w->want_size.max.h;
+				if (w->want_size.max.w < average_size) {
+					w->current_size.w = w->want_size.max.w;
+					used_width += w->want_size.max.w;
+				} else if (w->want_size.min.w > average_size) {
+					w->current_size.w = w->want_size.min.w;
+					used_width += w->want_size.max.w;
 				} else {
-					w->current_size.h = -1;
+					w->current_size.w = -1;
 					widgets_left++;
 				}
 			}
 			
 			// then we'll re-calculate the equal height again
-			if (widgets_left) average_size = used_height/widgets_left;
+			if (widgets_left) average_size = used_width/widgets_left;
 			
 			// what if average_size violates any child's constraint?
 			// idk, maybe try a greedy algorithm, idk
 			for (perse_widget_t* w = widget->child; w; w = w->next) {
-				if (w->current_size.h != -1) continue;
-				w->current_size.h = average_size;
+				if (w->current_size.w != -1) continue;
+				w->current_size.w = average_size;
 			}
 			
-			// set the widths
+			// set the heights
 			for (perse_widget_t* w = widget->child; w; w = w->next) {
-				if (w->want_size.min.w < widget->current_size.w) {
-					w->current_size.w = w->want_size.min.w;
+				if (w->want_size.min.h < widget->current_size.h) {
+					w->current_size.h = w->want_size.min.h;
 				} else {
-					w->current_size.w = widget->current_size.w;
+					w->current_size.h = widget->current_size.h;
 				}
 			} 
 		} break;
@@ -347,53 +334,25 @@ static void calculate_size(perse_widget_t* widget) {
 		
 		case PERSE_WIDGET_ABSOLUTE_LAYOUT:
 		default: {
+			const int default_size = 32;
 			
-			// TODO: switch this to .. hmm..
-			// for each widget
-			// - if has min size, set that
-			// - if does not have, set max
-			// - otherwise set some random value
-			
-			
-			// first we'll try to divide the height equally
-			int widgets = 0;
-			for (perse_widget_t* w = widget->child; w; w = w->next) widgets++;
-			int average_size = widget->current_size.h / widgets;
-			
-			// then we'll see if any widget doesn't like that height
-			int used_height = 0;
-			int widgets_left = 0;
 			for (perse_widget_t* w = widget->child; w; w = w->next) {
-				if (w->want_size.max.h < average_size) {
-					w->current_size.h = w->want_size.max.h;
-					used_height += w->want_size.max.h;
-				} else if (w->want_size.min.h > average_size) {
-					w->current_size.h = w->want_size.min.h;
-					used_height += w->want_size.max.h;
+				if (w->constraint_size.min.w > 0) {
+					w->current_size.w = w->constraint_size.min.w;
+				} else if (w->constraint_size.max.w > 0) {
+					w->current_size.w = w->constraint_size.max.w;
 				} else {
-					w->current_size.h = -1;
-					widgets_left++;
+					w->current_size.w = default_size;
+				}
+				
+				if (w->constraint_size.min.h > 0) {
+					w->current_size.h = w->constraint_size.min.h;
+				} else if (w->constraint_size.max.h > 0) {
+					w->current_size.h = w->constraint_size.max.h;
+				} else {
+					w->current_size.h = default_size;
 				}
 			}
-			
-			// then we'll re-calculate the equal height again
-			if (widgets_left) average_size = used_height/widgets_left;
-			
-			// what if average_size violates any child's constraint?
-			// idk, maybe try a greedy algorithm, idk
-			for (perse_widget_t* w = widget->child; w; w = w->next) {
-				if (w->current_size.h != -1) continue;
-				w->current_size.h = average_size;
-			}
-			
-			// set the widths
-			for (perse_widget_t* w = widget->child; w; w = w->next) {
-				if (w->want_size.min.w < widget->current_size.w) {
-					w->current_size.w = w->want_size.min.w;
-				} else {
-					w->current_size.w = widget->current_size.w;
-				}
-			} 
 		}
 	}
 	
@@ -411,16 +370,16 @@ static void calculate_position(perse_widget_t* widget) {
 	switch (widget->type) {
 		case PERSE_WIDGET_HORIZONTAL_LAYOUT: {
 			// TODO: switch to horizontal
-			int current_h = 0;
+			int current_w = 0;
 			for (perse_widget_t* w = widget->child; w; w = w->next) {
-				int offset = widget->current_size.w - w->constraint_size.min.w;
+				int offset = widget->current_size.h - w->constraint_size.min.h;
 
 				if (offset != 0 && offset/2 > 0) {
-					widget->position.x = offset/2;
+					widget->position.y = offset/2;
 				}
 				
-				w->position.y = current_h;
-				current_h += w->current_size.h;
+				w->position.y = current_w;
+				current_w += w->current_size.w;
 			}
 		}
 		case PERSE_WIDGET_VERTICAL_LAYOUT: {
