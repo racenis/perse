@@ -39,11 +39,12 @@ void perse_MergeTree(perse_widget_t* dst, perse_widget_t* src) {
 			goto next_prop;
 		}
 		
-		next_prop:;
+	next_prop:	
+		dst_prop = dst_prop->next;
 	}
 	
 	// add all remaining properties as new properties
-	perse_property_t* prop = dst->property;
+	perse_property_t* prop = src->property;
 	while (prop) {
 		perse_property_t* next = prop->next;
 		
@@ -137,7 +138,7 @@ void perse_MergeTree(perse_widget_t* dst, perse_widget_t* src) {
 	}
 	
 	// src widget is now childless, time to kill it
-	perse_DestroyWidget(src_widg);
+	perse_DestroyWidget(src);
 }
 
 // this function calculates `want` size for widgets. basically for each widget
@@ -256,10 +257,10 @@ static void calculate_size(perse_widget_t* widget) {
 			for (perse_widget_t* w = widget->child; w; w = w->next) {
 				if (w->want_size.max.w < average_size) {
 					w->current_size.w = w->want_size.max.w;
-					used_width += w->want_size.max.w;
+					used_width += w->current_size.w; //w->want_size.max.w;
 				} else if (w->want_size.min.w > average_size) {
 					w->current_size.w = w->want_size.min.w;
-					used_width += w->want_size.max.w;
+					used_width += w->current_size.w; //w->want_size.max.w;
 				} else {
 					w->current_size.w = -1;
 					widgets_left++;
@@ -267,7 +268,7 @@ static void calculate_size(perse_widget_t* widget) {
 			}
 			
 			// then we'll re-calculate the equal height again
-			if (widgets_left) average_size = used_width/widgets_left;
+			if (widgets_left) average_size = (widget->current_size.w - used_width)/widgets_left; //used_width/widgets_left;
 			
 			// what if average_size violates any child's constraint?
 			// idk, maybe try a greedy algorithm, idk
@@ -298,10 +299,10 @@ static void calculate_size(perse_widget_t* widget) {
 			for (perse_widget_t* w = widget->child; w; w = w->next) {
 				if (w->want_size.max.h < average_size) {
 					w->current_size.h = w->want_size.max.h;
-					used_height += w->want_size.max.h;
+					used_height += w->current_size.h; //w->want_size.max.h;
 				} else if (w->want_size.min.h > average_size) {
 					w->current_size.h = w->want_size.min.h;
-					used_height += w->want_size.max.h;
+					used_height += w->current_size.h; //w->want_size.max.h;
 				} else {
 					w->current_size.h = -1;
 					widgets_left++;
@@ -369,26 +370,26 @@ static void calculate_position(perse_widget_t* widget) {
 	// for each child, calculate their SIZE based on their WANT
 	switch (widget->type) {
 		case PERSE_WIDGET_HORIZONTAL_LAYOUT: {
-			// TODO: switch to horizontal
 			int current_w = 0;
 			for (perse_widget_t* w = widget->child; w; w = w->next) {
 				int offset = widget->current_size.h - w->constraint_size.min.h;
 
 				if (offset != 0 && offset/2 > 0) {
-					widget->position.y = offset/2;
+					w->position.y = offset/2;
 				}
 				
-				w->position.y = current_w;
+				w->position.x = current_w;
 				current_w += w->current_size.w;
 			}
-		}
+		} break;
+		
 		case PERSE_WIDGET_VERTICAL_LAYOUT: {
 			int current_h = 0;
 			for (perse_widget_t* w = widget->child; w; w = w->next) {
 				int offset = widget->current_size.w - w->constraint_size.min.w;
 
 				if (offset != 0 && offset/2 > 0) {
-					widget->position.x = offset/2;
+					w->position.x = offset/2;
 				}
 				
 				w->position.y = current_h;

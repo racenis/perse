@@ -47,7 +47,7 @@ static void clean_property(perse_property_t* property) {
 void perse_DestroyProperty(perse_property_t* property) {
 	clean_property(property);
 	
-	memset(property, 0, sizeof(property));
+	memset(property, 0, sizeof(*property));
 	free(property);
 }
 
@@ -113,7 +113,7 @@ void perse_CopyPropertyValue(perse_property_t* dst, perse_property_t* src) {
 			for (char** s = src->string_array; s; s++) string_count++;
 			string_count++;
 			dst->string_array = calloc(1, sizeof(char*) * string_count);
-			for (char** s = src->string_array, **d = dst->string_array; s;
+			for (char** s = src->string_array, **d = dst->string_array; *s;
 				s++, d++) {
 					*d = malloc(strlen(*s) + 1);
 					strcpy(*d, *s);
@@ -124,7 +124,7 @@ void perse_CopyPropertyValue(perse_property_t* dst, perse_property_t* src) {
 			break;
 		case PERSE_TYPE_CALLBACK_ARRAY: {
 			int count = 0;
-			for (void (**s)(perse_widget_t*) = src->callback_array; s; s++) count++;
+			for (void (**s)(perse_widget_t*) = src->callback_array; *s; s++) count++;
 			count++;
 			dst->callback_array = calloc(1, sizeof(void (*)(perse_widget_t*)) * count);
 			for (void (**s)(perse_widget_t*) = src->callback_array,
@@ -136,7 +136,7 @@ void perse_CopyPropertyValue(perse_property_t* dst, perse_property_t* src) {
 			break;
 		case PERSE_TYPE_POINTER_ARRAY: {
 			int count = 0;
-			for (void** s = src->pointer_array; s; s++) count++;
+			for (void** s = src->pointer_array; *s; s++) count++;
 			count++;
 			dst->pointer_array = calloc(1, sizeof(void*) * count);
 			for (void** s = src->pointer_array,
@@ -164,7 +164,7 @@ int perse_IsPropertyMatching(perse_property_t* p1, perse_property_t* p2) {
 			return strcmp(p1->string, p2->string) == 0;
 		case PERSE_TYPE_STRING_ARRAY:
 			for (char** str1 = p1->string_array, **str2 = p2->string_array; 
-				str1 && str2; str1++, str2++) {
+				*str1 && *str2; str1++, str2++) {
 					if (strcmp(*str1, *str2) != 0) return 0;
 				}
 			return 1;
@@ -172,7 +172,7 @@ int perse_IsPropertyMatching(perse_property_t* p1, perse_property_t* p2) {
 			return p1->callback == p2->callback;
 		case PERSE_TYPE_CALLBACK_ARRAY:
 			for (void (**c1)(perse_widget_t*) = p1->callback_array,
-				(**c2)(perse_widget_t*) = p2->callback_array; c1 && c2; c1++, c2++) {
+				(**c2)(perse_widget_t*) = p2->callback_array; *c1 && *c2; c1++, c2++) {
 					if (c1 != c2) return 0;
 				}
 			return 1;

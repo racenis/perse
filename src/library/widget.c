@@ -49,7 +49,7 @@
 /// Use perse_DestroyWidget() to get rid of unneeded widgets.
 /// @return Pointer to new widget.
 perse_widget_t* perse_AllocateWidget() {
-	perse_widget_t* widget = calloc(1, sizeof(widget));
+	perse_widget_t* widget = calloc(1, sizeof(*widget));
 
 	widget->constraint_size.min.w = -1;
 	widget->constraint_size.min.h = -1;
@@ -96,7 +96,7 @@ void perse_DestroyWidget(perse_widget_t* widget) {
 		perse_BackendDestroyWidget(widget);
 	}
 	
-	memset(widget, 0, sizeof(widget));
+	memset(widget, 0, sizeof(*widget));
 	free(widget);
 }
 
