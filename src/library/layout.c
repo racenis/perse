@@ -1,10 +1,15 @@
 #include "layout.h"
 
+#include "perse.h"
 #include "backend.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+/*
+	For now we'll keep the kinda awful switch statement. Later we can refactor
+	it, so that it is easier to add new widget types.
+*/
 
 /// Merges widget trees.
 /// The `dst` tree should be the tree that already has layout calculated for it
@@ -13,7 +18,7 @@
 void perse_MergeTree(perse_widget_t* dst, perse_widget_t* src) {
 	// assume that types of dst and src are the same
 	if (dst->type != src->type) {
-		printf("FATAL ERROR: DIFFING TYPE MISMATCH\n");
+		perse_Log("FATAL ERROR: DIFFING TYPE MISMATCH\n");
 		abort();
 	}
 	
@@ -209,6 +214,17 @@ static void calculate_want(perse_widget_t* widget) {
 		case PERSE_WIDGET_FLOW_LAYOUT:
 		case PERSE_WIDGET_SPLITTER_LAYOUT:
 		case PERSE_WIDGET_FLEX_LAYOUT:
+		
+		// window just stretches its child to be same size as it is
+		case PERSE_WIDGET_WINDOW:
+			for (perse_widget_t* c = widget->child; c; c = c->next) {
+				c->want_size.min.w = widget->current_size.w;
+				c->want_size.min.h = widget->current_size.h;
+				
+				c->want_size.max.w = widget->current_size.w;
+				c->want_size.max.h = widget->current_size.h;
+			}
+		break;
 		
 		case PERSE_WIDGET_ABSOLUTE_LAYOUT:
 		default: {
@@ -470,6 +486,10 @@ static void apply_changes(perse_widget_t* widget, char recalc_pos) {
 		if (!p->changed) continue;
 		perse_BackendSetProperty(widget, p);
 		p->changed = 0;
+	}
+	
+	for (perse_widget_t* w = widget->child; w; w = w->next) {
+		apply_changes(widget, recalc_pos);
 	}
 }
 

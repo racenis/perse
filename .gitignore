@@ -34,3 +34,5 @@
 
 stratchpad/
 src/library/build/
+src/backend/motif/build/
+src/backend/win32/build/
