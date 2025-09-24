@@ -14,7 +14,12 @@ typedef enum {
 } perse_type_t;
 
 typedef enum {
-	PERSE_NAME_INVALID = 0
+	PERSE_NAME_INVALID = 0,
+	
+	PERSE_NAME_TITLE,
+	PERSE_NAME_TEXT,
+	
+	PERSE_NAME_CALLBACK,
 } perse_name_t;
 
 typedef struct perse_widget perse_widget_t;

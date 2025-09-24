@@ -14,6 +14,8 @@ void (*perse_BackendDestroyWidget)(perse_widget_t*) = NULL;
 void (*perse_BackendSetProperty)(perse_widget_t*, perse_property_t*) = NULL;
 void (*perse_BackendSetSizePos)(perse_widget_t*) = NULL;
 
+void (*perse_BackendProcessEvents)() = NULL;
+
 void (*perse_BackendSetLogger)(void(*)(const char* fmt, ...)) = NULL;
 
 void perse_DefaultLogger(const char* fmt, ...);
@@ -39,6 +41,11 @@ void perse_LoadBackend() {
 	perse_BackendSetSizePos =
 		(void (*)(perse_widget_t*))GetProcAddress(backend_lib,
 			"perse_impl_BackendSetSizePos");
+	
+	// load command functions
+	perse_BackendProcessEvents =
+		(void (*)())GetProcAddress(backend_lib,
+			"perse_impl_BackendProcessEvents");
 	
 	// set up logging callback
 	perse_BackendSetLogger =
