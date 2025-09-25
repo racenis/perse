@@ -477,11 +477,17 @@ static void apply_changes(perse_widget_t* widget, char recalc_pos) {
 	
 	
 	if (!widget->system) {
+		perse_Log("creating widget\n");
 		perse_BackendCreateWidget(widget);
 	} else if (recalc_pos) {
+		perse_Log("setting sizepos\n");
 		perse_BackendSetSizePos(widget);
 	}
 	
+	//static int count = 0;
+	//if (count++ > 10) abort();
+	
+	perse_Log("setting props\n");
 	for (perse_property_t* p = widget->property; p; p = p->next) {
 		if (!p->changed) continue;
 		perse_BackendSetProperty(widget, p);
@@ -489,7 +495,7 @@ static void apply_changes(perse_widget_t* widget, char recalc_pos) {
 	}
 	
 	for (perse_widget_t* w = widget->child; w; w = w->next) {
-		apply_changes(widget, recalc_pos);
+		apply_changes(w, recalc_pos);
 	}
 }
 

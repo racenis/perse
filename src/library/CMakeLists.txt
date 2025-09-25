@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(PerseLibrary C)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+
 # Build a static library from source files
 add_library(perse STATIC
     perse.c

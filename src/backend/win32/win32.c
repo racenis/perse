@@ -11,7 +11,9 @@
 
 static void (*log)(const char* fmt, ...) = NULL;
 
-PERSE_API void widglib_impl_SetLogger(void(*fn)(const char* fmt, ...)) {
+static int should_quit = 0;
+
+PERSE_API void perse_impl_BackendSetLogger(void(*fn)(const char* fmt, ...)) {
 	log = fn;
 }
 
@@ -21,6 +23,10 @@ PERSE_API void perse_impl_BackendProcessEvents() {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
+}
+
+PERSE_API int perse_impl_BackendShouldQuit() {
+	return should_quit;
 }
 
 static perse_widget_t* window(perse_widget_t* widg) {
@@ -94,6 +100,8 @@ perse_widget_t* LookupWidget(int index) {
 
 
 static LRESULT CALLBACK perse_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	//log("WIN32:: received %hx\n", uMsg);
+	
     switch (uMsg) {
 	case WM_COMMAND: {
 		int wmId = LOWORD(wParam);
@@ -119,6 +127,11 @@ static LRESULT CALLBACK perse_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 		PostQuitMessage(0);
 		return 0;
 
+	case WM_QUIT:
+		should_quit = 1;
+		log("WIN32:: received WM_QUIT\n");
+		break;
+		
 	case WM_PAINT: {
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hwnd, &ps);
@@ -132,7 +145,7 @@ static LRESULT CALLBACK perse_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-PERSE_API void widglib_impl_BackendCreateWidget(perse_widget_t* widget) {
+PERSE_API void perse_impl_BackendCreateWidget(perse_widget_t* widget) {
 	switch (widget->type) {
 		case PERSE_WIDGET_INVALID:
 			log("ERROR WIN32:: BackendCreateWidget passed in an INVALID\n");
@@ -225,7 +238,7 @@ PERSE_API void widglib_impl_BackendCreateWidget(perse_widget_t* widget) {
 			
 		} break;
 		
-		case PERSE_GROUP_PANEL: {
+		case PERSE_WIDGET_GROUP_PANEL: {
 			// TODO: implement
 			
 			/*
@@ -233,7 +246,7 @@ PERSE_API void widglib_impl_BackendCreateWidget(perse_widget_t* widget) {
 			*/
 			
 		} break;
-		case PERSE_SCROLL_PANEL: {
+		case PERSE_WIDGET_SCROLL_PANEL: {
 			// TODO: implement
 			
 			/*
@@ -242,7 +255,7 @@ PERSE_API void widglib_impl_BackendCreateWidget(perse_widget_t* widget) {
 			
 		} break;
 		
-		case PERSE_ARROW_BUTTON: {
+		case PERSE_WIDGET_ARROW_BUTTON: {
 			// TODO: implement
 			
 			/*
@@ -250,11 +263,11 @@ PERSE_API void widglib_impl_BackendCreateWidget(perse_widget_t* widget) {
 			*/
 			
 		} break;
-		case PERSE_TEXT_BUTTON: {
+		case PERSE_WIDGET_TEXT_BUTTON: {
 			
 			perse_property_t* p = NULL;
 			const char* title = "libperse button";
-			if (p = prop(PERSE_NAME_TITLE, widget)) {
+			if (p = prop(PERSE_NAME_TEXT, widget)) {
 				if (p->type != PERSE_TYPE_STRING) {
 					log("ERROR WIN32:: TEXT_BUTTON property TITLE not string");
 				} else {
@@ -287,7 +300,7 @@ PERSE_API void widglib_impl_BackendCreateWidget(perse_widget_t* widget) {
 			widget->system = hwnd;
 			
 		} break;
-		case PERSE_IMAGE_BUTTON: {
+		case PERSE_WIDGET_IMAGE_BUTTON: {
 			// TODO: implement
 			
 			/*
@@ -295,16 +308,7 @@ PERSE_API void widglib_impl_BackendCreateWidget(perse_widget_t* widget) {
 			*/
 			
 		} break;
-		case PERSE_COMBO_BOX: {
-			// TODO: implement
-			
-			/*
-			
-			*/
-			
-		} break;
-		
-		case PERSE_TEXT_BOX: {
+		case PERSE_WIDGET_COMBO_BOX: {
 			// TODO: implement
 			
 			/*
@@ -313,15 +317,7 @@ PERSE_API void widglib_impl_BackendCreateWidget(perse_widget_t* widget) {
 			
 		} break;
 		
-		case PERSE_DATE_PICKER: {
-			// TODO: implement
-			
-			/*
-			
-			*/
-			
-		} break;
-		case PERSE_IP_ADDRESS_PICKER: {
+		case PERSE_WIDGET_TEXT_BOX: {
 			// TODO: implement
 			
 			/*
@@ -330,7 +326,7 @@ PERSE_API void widglib_impl_BackendCreateWidget(perse_widget_t* widget) {
 			
 		} break;
 		
-		case PERSE_IMAGE: {
+		case PERSE_WIDGET_DATE_PICKER: {
 			// TODO: implement
 			
 			/*
@@ -338,24 +334,7 @@ PERSE_API void widglib_impl_BackendCreateWidget(perse_widget_t* widget) {
 			*/
 			
 		} break;
-		case PERSE_CANVAS: {
-			// TODO: implement
-			
-			/*
-			
-			*/
-			
-		} break;
-		
-		case PERSE_PROGRESS_BAR: {
-			// TODO: implement
-			
-			/*
-			
-			*/
-			
-		} break;
-		case PERSE_PROPERTY_LIST: {
+		case PERSE_WIDGET_IP_ADDRESS_PICKER: {
 			// TODO: implement
 			
 			/*
@@ -364,7 +343,41 @@ PERSE_API void widglib_impl_BackendCreateWidget(perse_widget_t* widget) {
 			
 		} break;
 		
-		case PERSE_TREE_VIEW: {
+		case PERSE_WIDGET_IMAGE: {
+			// TODO: implement
+			
+			/*
+			
+			*/
+			
+		} break;
+		case PERSE_WIDGET_CANVAS: {
+			// TODO: implement
+			
+			/*
+			
+			*/
+			
+		} break;
+		
+		case PERSE_WIDGET_PROGRESS_BAR: {
+			// TODO: implement
+			
+			/*
+			
+			*/
+			
+		} break;
+		case PERSE_WIDGET_PROPERTY_LIST: {
+			// TODO: implement
+			
+			/*
+			
+			*/
+			
+		} break;
+		
+		case PERSE_WIDGET_TREE_VIEW: {
 			// TODO: implement
 			
 			/*
@@ -377,7 +390,7 @@ PERSE_API void widglib_impl_BackendCreateWidget(perse_widget_t* widget) {
 	}
 }
 
-PERSE_API void widglib_impl_BackendDestroyWidget(perse_widget_t* widget) {
+PERSE_API void perse_impl_BackendDestroyWidget(perse_widget_t* widget) {
 	switch (widget->type) {
 		case PERSE_WIDGET_INVALID:
 			log("ERROR WIN32:: BackendDestroyWidget passed in an INVALID");
@@ -399,30 +412,30 @@ PERSE_API void widglib_impl_BackendDestroyWidget(perse_widget_t* widget) {
 		
 		case PERSE_WIDGET_TAB_PANEL:
 		
-		case PERSE_GROUP_PANEL:
-		case PERSE_SCROLL_PANEL:
+		case PERSE_WIDGET_GROUP_PANEL:
+		case PERSE_WIDGET_SCROLL_PANEL:
 		
-		case PERSE_ARROW_BUTTON:
-		case PERSE_TEXT_BUTTON:
-		case PERSE_IMAGE_BUTTON:
-		case PERSE_COMBO_BOX:
+		case PERSE_WIDGET_ARROW_BUTTON:
+		case PERSE_WIDGET_TEXT_BUTTON:
+		case PERSE_WIDGET_IMAGE_BUTTON:
+		case PERSE_WIDGET_COMBO_BOX:
 		
-		case PERSE_TEXT_BOX:
+		case PERSE_WIDGET_TEXT_BOX:
 		
-		case PERSE_DATE_PICKER:
-		case PERSE_IP_ADDRESS_PICKER:
+		case PERSE_WIDGET_DATE_PICKER:
+		case PERSE_WIDGET_IP_ADDRESS_PICKER:
 		
-		case PERSE_IMAGE:
-		case PERSE_CANVAS:
+		case PERSE_WIDGET_IMAGE:
+		case PERSE_WIDGET_CANVAS:
 		
-		case PERSE_PROGRESS_BAR:
-		case PERSE_PROPERTY_LIST:
+		case PERSE_WIDGET_PROGRESS_BAR:
+		case PERSE_WIDGET_PROPERTY_LIST:
 		
-		case PERSE_TREE_VIEW:
+		case PERSE_WIDGET_TREE_VIEW:
 	}
 }
 
-PERSE_API void widglib_impl_BackendSetProperty(perse_widget_t* widget, perse_property_t* prop) {
+PERSE_API void perse_impl_BackendSetProperty(perse_widget_t* widget, perse_property_t* prop) {
 	switch (widget->type) {
 		case PERSE_WIDGET_INVALID:
 			log("ERROR WIN32:: BackendSetProperty passed in an INVALID");
@@ -444,30 +457,30 @@ PERSE_API void widglib_impl_BackendSetProperty(perse_widget_t* widget, perse_pro
 		
 		case PERSE_WIDGET_TAB_PANEL:
 		
-		case PERSE_GROUP_PANEL:
-		case PERSE_SCROLL_PANEL:
+		case PERSE_WIDGET_GROUP_PANEL:
+		case PERSE_WIDGET_SCROLL_PANEL:
 		
-		case PERSE_ARROW_BUTTON:
-		case PERSE_TEXT_BUTTON:
-		case PERSE_IMAGE_BUTTON:
-		case PERSE_COMBO_BOX:
+		case PERSE_WIDGET_ARROW_BUTTON:
+		case PERSE_WIDGET_TEXT_BUTTON:
+		case PERSE_WIDGET_IMAGE_BUTTON:
+		case PERSE_WIDGET_COMBO_BOX:
 		
-		case PERSE_TEXT_BOX:
+		case PERSE_WIDGET_TEXT_BOX:
 		
-		case PERSE_DATE_PICKER:
-		case PERSE_IP_ADDRESS_PICKER:
+		case PERSE_WIDGET_DATE_PICKER:
+		case PERSE_WIDGET_IP_ADDRESS_PICKER:
 		
-		case PERSE_IMAGE:
-		case PERSE_CANVAS:
+		case PERSE_WIDGET_IMAGE:
+		case PERSE_WIDGET_CANVAS:
 		
-		case PERSE_PROGRESS_BAR:
-		case PERSE_PROPERTY_LIST:
+		case PERSE_WIDGET_PROGRESS_BAR:
+		case PERSE_WIDGET_PROPERTY_LIST:
 		
-		case PERSE_TREE_VIEW:
+		case PERSE_WIDGET_TREE_VIEW:
 	}
 }
 
-PERSE_API void widglib_impl_BackendSetSizePos(perse_widget_t* widget) {
+PERSE_API void perse_impl_BackendSetSizePos(perse_widget_t* widget) {
 	switch (widget->type) {
 		case PERSE_WIDGET_INVALID:
 			log("ERROR WIN32:: BackendSetSizePos passed in an INVALID");
@@ -494,25 +507,25 @@ PERSE_API void widglib_impl_BackendSetSizePos(perse_widget_t* widget) {
 		
 		case PERSE_WIDGET_TAB_PANEL:
 		
-		case PERSE_GROUP_PANEL:
-		case PERSE_SCROLL_PANEL:
+		case PERSE_WIDGET_GROUP_PANEL:
+		case PERSE_WIDGET_SCROLL_PANEL:
 		
-		case PERSE_ARROW_BUTTON:
-		case PERSE_TEXT_BUTTON:
-		case PERSE_IMAGE_BUTTON:
-		case PERSE_COMBO_BOX:
+		case PERSE_WIDGET_ARROW_BUTTON:
+		case PERSE_WIDGET_TEXT_BUTTON:
+		case PERSE_WIDGET_IMAGE_BUTTON:
+		case PERSE_WIDGET_COMBO_BOX:
 		
-		case PERSE_TEXT_BOX:
+		case PERSE_WIDGET_TEXT_BOX:
 		
-		case PERSE_DATE_PICKER:
-		case PERSE_IP_ADDRESS_PICKER:
+		case PERSE_WIDGET_DATE_PICKER:
+		case PERSE_WIDGET_IP_ADDRESS_PICKER:
 		
-		case PERSE_IMAGE:
-		case PERSE_CANVAS:
+		case PERSE_WIDGET_IMAGE:
+		case PERSE_WIDGET_CANVAS:
 		
-		case PERSE_PROGRESS_BAR:
-		case PERSE_PROPERTY_LIST:
+		case PERSE_WIDGET_PROGRESS_BAR:
+		case PERSE_WIDGET_PROPERTY_LIST:
 		
-		case PERSE_TREE_VIEW:
+		case PERSE_WIDGET_TREE_VIEW:
 	}
 }

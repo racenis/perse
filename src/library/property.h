@@ -19,6 +19,8 @@ typedef enum {
 	PERSE_NAME_TITLE,
 	PERSE_NAME_TEXT,
 	
+	PERSE_NAME_ENABLED,
+	
 	PERSE_NAME_CALLBACK,
 } perse_name_t;
 

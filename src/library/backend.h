@@ -10,6 +10,7 @@ extern void (*perse_BackendSetProperty)(perse_widget_t*, perse_property_t*);
 extern void (*perse_BackendSetSizePos)(perse_widget_t*);
 
 extern void (*perse_BackendProcessEvents)();
+extern int (*perse_BackendShouldQuit)();
 
 void perse_LoadBackend();
 
