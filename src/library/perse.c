@@ -3,13 +3,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-void perse_DefaultLogger(const char* fmt, ...) {
-    va_list args;
-    va_start(args, fmt);
-	
+void perse_DefaultLogger(const char* fmt, va_list args) {
     vprintf(fmt, args);
-	
-    va_end(args);
 }
 
 static void(*logger)(const char* fmt, ...) = perse_DefaultLogger;

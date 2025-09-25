@@ -44,8 +44,8 @@ Widget& Widget::operator<<(std::initializer_list<Widget> children){
 }
 
 Widget& Widget::operator<<(std::vector<Widget> children) {
-	for (const auto& widget : children) {
-		perse_SetParent((perse_widget*)widget.ptr, (perse_widget*)this->ptr);
+	for (auto widget = children.rbegin(); widget != children.rend(); ++widget) {
+		perse_SetParent((perse_widget*)widget->ptr, (perse_widget*)this->ptr);
 	}
 
 	return *this;
@@ -178,7 +178,15 @@ Widget GroupPanel(GroupPanelProps props) {
 
 Widget AbsoluteLayout(AbsoluteLayoutProps props) {
 	INIT_WIDGET(PERSE_WIDGET_ABSOLUTE_LAYOUT)
-	
+	return widget_class;
+}
+
+Widget HorizontalLayout(AbsoluteLayoutProps props) {
+	INIT_WIDGET(PERSE_WIDGET_HORIZONTAL_LAYOUT)
+	return widget_class;
+}
+Widget VerticalLayout(AbsoluteLayoutProps props) {
+	INIT_WIDGET(PERSE_WIDGET_VERTICAL_LAYOUT)
 	return widget_class;
 }
 

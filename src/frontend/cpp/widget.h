@@ -310,6 +310,8 @@ Widget TabPanel(TabPanelProps);
 Widget GroupPanel(GroupPanelProps);
 
 Widget AbsoluteLayout(AbsoluteLayoutProps);
+Widget HorizontalLayout(AbsoluteLayoutProps);
+Widget VerticalLayout(AbsoluteLayoutProps);
 
 Widget Window(WindowProps);
 

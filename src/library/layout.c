@@ -185,6 +185,7 @@ static void calculate_want(perse_widget_t* widget) {
 			
 			widget->want_size.max.h = widget->constraint_size.max.h;
 			widget->want_size.max.w = widget->constraint_size.max.w;
+
 		} break;
 		
 		case PERSE_WIDGET_VERTICAL_LAYOUT: {
@@ -300,7 +301,8 @@ static void calculate_size(perse_widget_t* widget) {
 				} else {
 					w->current_size.h = widget->current_size.h;
 				}
-			} 
+			}
+			
 		} break;
 		
 		case PERSE_WIDGET_VERTICAL_LAYOUT: {
@@ -342,12 +344,20 @@ static void calculate_size(perse_widget_t* widget) {
 				} else {
 					w->current_size.w = widget->current_size.w;
 				}
-			} 
+			}
 		} break;
 		case PERSE_WIDGET_GRID_LAYOUT:
 		case PERSE_WIDGET_FLOW_LAYOUT:
 		case PERSE_WIDGET_SPLITTER_LAYOUT:
 		case PERSE_WIDGET_FLEX_LAYOUT:
+		
+		// idk, this might cause issues if more than one child for window
+		case PERSE_WIDGET_WINDOW:
+			for (perse_widget_t* w = widget->child; w; w = w->next) {
+				w->current_size.w = widget->current_size.w;
+				w->current_size.h = widget->current_size.h;
+			}
+			break;
 		
 		case PERSE_WIDGET_ABSOLUTE_LAYOUT:
 		default: {
@@ -382,13 +392,13 @@ static void calculate_position(perse_widget_t* widget) {
 	
 	// child position is determined by their parent, if reached leaf, return
 	if (!widget->child) return;
-	
+
 	// for each child, calculate their SIZE based on their WANT
 	switch (widget->type) {
 		case PERSE_WIDGET_HORIZONTAL_LAYOUT: {
 			int current_w = 0;
 			for (perse_widget_t* w = widget->child; w; w = w->next) {
-				int offset = widget->current_size.h - w->constraint_size.min.h;
+				int offset = widget->current_size.h - w->current_size.h;
 
 				if (offset != 0 && offset/2 > 0) {
 					w->position.y = offset/2;
@@ -402,7 +412,7 @@ static void calculate_position(perse_widget_t* widget) {
 		case PERSE_WIDGET_VERTICAL_LAYOUT: {
 			int current_h = 0;
 			for (perse_widget_t* w = widget->child; w; w = w->next) {
-				int offset = widget->current_size.w - w->constraint_size.min.w;
+				int offset = widget->current_size.w - w->current_size.w;
 
 				if (offset != 0 && offset/2 > 0) {
 					w->position.x = offset/2;
@@ -411,7 +421,7 @@ static void calculate_position(perse_widget_t* widget) {
 				w->position.y = current_h;
 				current_h += w->current_size.h;
 			}
-		}
+		} break;
 		case PERSE_WIDGET_GRID_LAYOUT:
 		case PERSE_WIDGET_FLOW_LAYOUT:
 		case PERSE_WIDGET_SPLITTER_LAYOUT:
@@ -442,6 +452,10 @@ static void calculate_position(perse_widget_t* widget) {
 				w->absolute.x = w->position.x;
 				w->absolute.y = w->position.y;
 			}	
+	}
+	
+	for (perse_widget_t* w = widget->child; w; w = w->next) {
+		calculate_position(w);
 	}
 }
 
@@ -477,17 +491,12 @@ static void apply_changes(perse_widget_t* widget, char recalc_pos) {
 	
 	
 	if (!widget->system) {
-		perse_Log("creating widget\n");
 		perse_BackendCreateWidget(widget);
 	} else if (recalc_pos) {
-		perse_Log("setting sizepos\n");
 		perse_BackendSetSizePos(widget);
 	}
+
 	
-	//static int count = 0;
-	//if (count++ > 10) abort();
-	
-	perse_Log("setting props\n");
 	for (perse_property_t* p = widget->property; p; p = p->next) {
 		if (!p->changed) continue;
 		perse_BackendSetProperty(widget, p);
