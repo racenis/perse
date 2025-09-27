@@ -10,6 +10,7 @@ void Init();
 void SetRoot(Widget(*)());
 
 void Render();
+void Reflow();
 
 bool Wait();
 

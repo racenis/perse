@@ -1,7 +1,7 @@
-#include "property.h"
-
 #include <stdlib.h>
 #include <string.h>
+
+#include "property.h"
 
 /*
 	BASIC EXPLANATION OF PROPERTIES
@@ -93,6 +93,18 @@ perse_property_t* perse_CreatePropertyString(const char* string) {
 	
 	return property;
 }
+
+
+perse_property_t* perse_CreatePropertyCallback(void (*cb)(perse_widget_t*)) {
+	perse_property_t* property = perse_AllocateProperty();
+	
+	property->type = PERSE_TYPE_CALLBACK;
+	property->callback = cb;
+	
+	return property;
+}
+
+
 
 void perse_CopyPropertyValue(perse_property_t* dst, perse_property_t* src) {
 	clean_property(dst);

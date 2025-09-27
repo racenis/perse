@@ -1,4 +1,6 @@
 
+#include <map>
+
 #include "widget.h"
 
 extern "C" {
@@ -81,7 +83,20 @@ static void add_prop(perse_widget* widget, perse_name_t name,
 	p->name = name;
 	perse_AddProperty(widget, p);
 }
-						
+
+static std::map<perse_widget*, OnClickCallback> callbacks;
+static void add_prop(perse_widget* widget, perse_name_t name,
+                     Property<OnClickCallback> value) {
+	if (!value.set()) return;
+	perse_property_t* p = perse_CreatePropertyCallback([](perse_widget_t* w){
+		callbacks[w]();
+	});
+	p->name = name;
+	perse_AddProperty(widget, p);
+	callbacks[widget] = value;
+}
+
+
 Widget ArrowButton(ArrowButtonProps props) {
 	INIT_WIDGET(PERSE_WIDGET_ARROW_BUTTON)
 	
@@ -99,6 +114,7 @@ Widget Button(ButtonProps props) {
 	
 	add_prop(widget, PERSE_NAME_TEXT, props.text);
 	add_prop(widget, PERSE_NAME_ENABLED, props.enabled);
+	add_prop(widget, PERSE_NAME_ON_CLICK, props.onclick);
 	
 	return widget_class;
 }
@@ -190,6 +206,7 @@ Widget VerticalLayout(AbsoluteLayoutProps props) {
 	return widget_class;
 }
 
+void temp_resize_callback(perse_widget*);
 
 Widget Window(WindowProps props) {
 	perse_widget* widget;
@@ -199,6 +216,11 @@ Widget Window(WindowProps props) {
 	widget->type = PERSE_WIDGET_WINDOW;
 	
 	add_prop(widget, PERSE_NAME_TITLE, props.title);
+	
+	// for now we'll try this approach 
+	perse_property_t* p = perse_CreatePropertyCallback(temp_resize_callback);
+	p->name = PERSE_NAME_ON_RESIZE;
+	perse_AddProperty(widget, p);
 	
 	return widget_class;
 }

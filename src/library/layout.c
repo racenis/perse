@@ -29,6 +29,7 @@ void perse_MergeTree(perse_widget_t* dst, perse_widget_t* src) {
 		// find another property to diff with
 		perse_property_t* src_prop = src->property;
 		while (src_prop) {
+			
 			if (src_prop->name != dst_prop->name) {
 				src_prop = src_prop->next;
 				continue;
@@ -69,6 +70,35 @@ void perse_MergeTree(perse_widget_t* dst, perse_widget_t* src) {
 		dst->changed = 1;
 	}
 	
+	// compare children - process src children one by one
+/*while (src->child) {  // Keep going while src has children
+    perse_widget_t* src_widg = src->child;  // Always take the first child
+    perse_widget_t* dst_widg = dst->child;
+    int found = 0;
+    
+    // Try to find a matching dst widget
+    while (dst_widg) {
+        if ((src_widg->key != -1 && dst_widg->key == src_widg->key && src_widg->type == dst_widg->type) ||
+            (src_widg->key == -1 && src_widg->type == dst_widg->type)) {
+            
+            // Merge and destroy src_widg
+            perse_MergeTree(dst_widg, src_widg);
+            //perse_SetParent(src_widg, NULL);  // Removes from src->child
+            //perse_DestroyWidget(src_widg);
+            found = 1;
+            break;
+        }
+        dst_widg = dst_widg->next;
+    }
+    
+    if (!found) {
+        // Move src_widg to dst
+        perse_SetParent(src_widg, NULL);  // Remove from src
+        perse_SetParent(src_widg, dst);   // Add to dst
+    }
+}*/
+	
+	
 	// compare children
 	perse_widget_t* dst_widg = dst->child;
 	while (dst_widg) {
@@ -85,8 +115,8 @@ void perse_MergeTree(perse_widget_t* dst, perse_widget_t* src) {
 				if (src_widg->type == dst_widg->type) {
 					perse_MergeTree(dst_widg, src_widg);
 					
-					perse_SetParent(src_widg, NULL);
-					perse_DestroyWidget(src_widg);
+					//perse_SetParent(src_widg, NULL);
+					//perse_DestroyWidget(src_widg);
 					
 					goto next;
 				}
@@ -112,8 +142,8 @@ void perse_MergeTree(perse_widget_t* dst, perse_widget_t* src) {
 			if (src_widg->type == dst_widg->type) {
 				perse_MergeTree(dst_widg, src_widg);
 				
-				perse_SetParent(src_widg, NULL);
-				perse_DestroyWidget(src_widg);
+				//perse_SetParent(src_widg, NULL);
+				//perse_DestroyWidget(src_widg);
 				
 				goto next;
 			}
@@ -139,7 +169,9 @@ void perse_MergeTree(perse_widget_t* dst, perse_widget_t* src) {
 	// add any remaining new widgets
 	perse_widget_t* src_widg = src->child;
 	while (src_widg) {
+		perse_widget_t* next = src_widg->next;
 		perse_SetParent(src_widg, dst);
+		src_widg = next;
 	}
 	
 	// src widget is now childless, time to kill it
@@ -171,7 +203,10 @@ static void calculate_want(perse_widget_t* widget) {
 			int largest_min = -1;
 			int width_sum = 0;
 	
+			perse_Log("largest_min %i\twidth_sum %i\n", largest_min, width_sum);
+	
 			for (perse_widget_t* c = widget->child; c; c = c->next) {
+				perse_Log("largest_min %i\twidth_sum %i\n", largest_min, width_sum);
 				if (c->constraint_size.min.h > largest_min) {
 					largest_min = c->constraint_size.min.h;
 				}
@@ -185,7 +220,9 @@ static void calculate_want(perse_widget_t* widget) {
 			
 			widget->want_size.max.h = widget->constraint_size.max.h;
 			widget->want_size.max.w = widget->constraint_size.max.w;
-
+			
+			perse_Log("horiz want %i %i %i %i\n", widget->want_size.min.h, widget->want_size.min.w, widget->want_size.max.h, widget->want_size.max.w);
+			
 		} break;
 		
 		case PERSE_WIDGET_VERTICAL_LAYOUT: {
@@ -303,6 +340,8 @@ static void calculate_size(perse_widget_t* widget) {
 				}
 			}
 			
+			perse_Log("horiz is %i %i\n", widget->current_size.w, widget->current_size.h);
+			
 		} break;
 		
 		case PERSE_WIDGET_VERTICAL_LAYOUT: {
@@ -336,6 +375,17 @@ static void calculate_size(perse_widget_t* widget) {
 				if (w->current_size.h != -1) continue;
 				w->current_size.h = average_size;
 			}
+			
+			// okay actually for the heights a better way to calculate would be
+			// this:
+			// - set current_size.h to -1 for all (to mark as unprocessed)
+			// - calculate the average height
+			// - check if all accept that height
+			//   - for those that don't set best acceptable height
+			// - then re-calculate the height again and continue until either
+			//   all widgets have their heights set except for those that accept
+			//   the average
+			// - finally set those to the average height
 			
 			// set the widths
 			for (perse_widget_t* w = widget->child; w; w = w->next) {
@@ -489,14 +539,18 @@ static void apply_changes(perse_widget_t* widget, char recalc_pos) {
 		recalc_pos = 1;
 	}
 	
-	
 	if (!widget->system) {
+		perse_Log("creating widget\n");
 		perse_BackendCreateWidget(widget);
 	} else if (recalc_pos) {
+		perse_Log("setting sizepos\n");
 		perse_BackendSetSizePos(widget);
 	}
-
 	
+	//static int count = 0;
+	//if (count++ > 10) abort();
+	
+	perse_Log("setting props\n");
 	for (perse_property_t* p = widget->property; p; p = p->next) {
 		if (!p->changed) continue;
 		perse_BackendSetProperty(widget, p);

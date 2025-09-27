@@ -112,13 +112,13 @@ void perse_SetParent(perse_widget_t* widget, perse_widget_t* parent) {
 		
 		// no such sibling
 		if (!sibling) {
-			if (parent->child != widget) {
+			if (widget->parent->child != widget) {
 				// shouldn't happen
 			} else {
-				parent->child = widget->next;
+				widget->parent->child = widget->next;
 			}
 		} else if (sibling == widget) {
-			parent->child = widget->next;
+			widget->parent->child = widget->next;
 		} else {
 			// splice out the widget
 			sibling->next = widget->next;
@@ -140,11 +140,15 @@ void perse_AddProperty(perse_widget_t* widget, perse_property_t* property) {
 }
 
 void perse_RemoveProperty(perse_widget_t* widget, perse_property_t* property) {
-	perse_property_t* prev = widget->property;
-	while (prev && prev->next != property) prev = prev->next;
-	if (prev == property) {
+	if (widget->property == property) {
+		// Property is first in the list
 		widget->property = property->next;
-	} else if (prev) {
-		prev->next = property->next;
+	} else {
+		// Find the previous property
+		perse_property_t* prev = widget->property;
+		while (prev && prev->next != property) prev = prev->next;
+		if (prev) {
+			prev->next = property->next;
+		}
 	}
 }

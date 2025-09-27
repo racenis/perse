@@ -12,6 +12,11 @@ namespace perse {
 static Widget(*root_func)() = nullptr;
 static perse_widget* current_root = nullptr;
 
+void temp_resize_callback(perse_widget* widget) {
+	std::cout << "resize callback called" << std::endl;
+	if (widget == current_root) Reflow();
+}
+
 void Init() {
 	perse_LoadBackend();
 }
@@ -33,6 +38,16 @@ void Render() {
 		current_root = new_root;
 	}
 	
+	std::cout << "calculate layout" << std::endl;
+	
+	perse_CalculateLayout(current_root);
+	
+	std::cout << "apply changes" << std::endl;
+	
+	perse_ApplyChanges(current_root);
+}
+
+void Reflow() {
 	std::cout << "calculate layout" << std::endl;
 	
 	perse_CalculateLayout(current_root);

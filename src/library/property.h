@@ -22,6 +22,9 @@ typedef enum {
 	PERSE_NAME_ENABLED,
 	
 	PERSE_NAME_CALLBACK,
+	
+	PERSE_NAME_ON_CLICK,
+	PERSE_NAME_ON_RESIZE,
 } perse_name_t;
 
 typedef struct perse_widget perse_widget_t;
@@ -53,6 +56,9 @@ perse_property_t* perse_CreatePropertyInteger(int);
 perse_property_t* perse_CreatePropertyBoolean(char);
 perse_property_t* perse_CreatePropertyString(const char*);
 
+perse_property_t* perse_CreatePropertyCallback(void (*)(perse_widget_t*));
+
+// actually we should have also MovePropertyValue and use that during merges
 void perse_CopyPropertyValue(perse_property_t*, perse_property_t*);
 int perse_IsPropertyMatching(perse_property_t*, perse_property_t*);
 
