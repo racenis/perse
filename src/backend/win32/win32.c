@@ -21,10 +21,16 @@ PERSE_API void perse_impl_BackendSetLogger(void(*fn)(const char* fmt, ...)) {
 }
 
 PERSE_API void perse_impl_BackendProcessEvents() {
-	MSG msg = { };
-	while (GetMessage(&msg, NULL, 0, 0) > 0) {
+	MSG msg = {};
+
+	if (GetMessage(&msg, NULL, 0, 0) > 0) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
+
+		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
 	}
 }
 

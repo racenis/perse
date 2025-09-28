@@ -25,42 +25,48 @@ void SetRoot(Widget(*root)()) {
 	root_func = root;
 }
 
+static bool need_render = false;
+static bool need_reflow = false;
+
 void Render() {
-	std::cout << "getting root widget" << std::endl;
-	auto root_widg = root_func();
-	perse_widget* new_root = (perse_widget*)root_widg.ptr;
-	
-	std::cout << "root is widget " << new_root << std::endl;
-	
-	if (current_root) {
-		perse_MergeTree(current_root, new_root);
-	} else {
-		current_root = new_root;
-	}
-	
-	std::cout << "calculate layout" << std::endl;
-	
-	perse_CalculateLayout(current_root);
-	
-	std::cout << "apply changes" << std::endl;
-	
-	perse_ApplyChanges(current_root);
+	need_render = true;
 }
 
 void Reflow() {
-	std::cout << "calculate layout" << std::endl;
-	
-	perse_CalculateLayout(current_root);
-	
-	std::cout << "apply changes" << std::endl;
-	
-	perse_ApplyChanges(current_root);
+	need_reflow = true;
 }
 
 bool Wait() {
+	if (!current_root) {
+		auto root_widg = root_func();
+		current_root = (perse_widget*)root_widg.ptr;
+		
+		perse_CalculateLayout(current_root);
+		perse_ApplyChanges(current_root);
+	}
+	
 	perse_BackendProcessEvents();
 	
-	return !perse_BackendShouldQuit();
+	if (perse_BackendShouldQuit()) {
+		return false;
+	}
+	
+	if (need_render) {
+		auto root_widg = root_func();
+		perse_widget* new_root = (perse_widget*)root_widg.ptr;
+
+		perse_MergeTree(current_root, new_root);
+	}
+	
+	if (need_render || need_reflow) {
+		perse_CalculateLayout(current_root);
+		perse_ApplyChanges(current_root);
+	}
+	
+	need_render = false;
+	need_reflow = false;
+	
+	return true;
 }
 
 }

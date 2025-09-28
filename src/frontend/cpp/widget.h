@@ -9,7 +9,7 @@
 
 namespace perse {
 
-void Render();
+bool Wait();
 
 class Widget {
 public:
@@ -22,7 +22,7 @@ protected:
 	Widget();
 	void* ptr = nullptr;
 	std::vector<Widget> children;
-	friend void Render();
+	friend bool Wait();
 };
 
 inline std::vector<Widget> Inside(std::vector<Widget> children) {
