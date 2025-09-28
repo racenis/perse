@@ -70,42 +70,25 @@ void perse_MergeTree(perse_widget_t* dst, perse_widget_t* src) {
 		dst->changed = 1;
 	}
 	
-	// compare children - process src children one by one
-/*while (src->child) {  // Keep going while src has children
-    perse_widget_t* src_widg = src->child;  // Always take the first child
-    perse_widget_t* dst_widg = dst->child;
-    int found = 0;
-    
-    // Try to find a matching dst widget
-    while (dst_widg) {
-        if ((src_widg->key != -1 && dst_widg->key == src_widg->key && src_widg->type == dst_widg->type) ||
-            (src_widg->key == -1 && src_widg->type == dst_widg->type)) {
-            
-            // Merge and destroy src_widg
-            perse_MergeTree(dst_widg, src_widg);
-            //perse_SetParent(src_widg, NULL);  // Removes from src->child
-            //perse_DestroyWidget(src_widg);
-            found = 1;
-            break;
-        }
-        dst_widg = dst_widg->next;
-    }
-    
-    if (!found) {
-        // Move src_widg to dst
-        perse_SetParent(src_widg, NULL);  // Remove from src
-        perse_SetParent(src_widg, dst);   // Add to dst
-    }
-}*/
+	// move user pointer
+	if (dst->destroy) {
+		dst->destroy(dst->user);
+	}
+	dst->user = src->user;
+	dst->destroy = src->destroy;
 	
+	src->user = NULL;
+	src->destroy = NULL;
 	
 	// compare children
 	perse_widget_t* dst_widg = dst->child;
 	while (dst_widg) {
-		if (dst_widg->key != -1) {
+		while (dst_widg->key != -1) {
+			abort();
+			
 			// find other property with same key
 			perse_widget_t* src_widg = src->child;
-			while (src_widg) {
+			if (src_widg) {
 				if (src_widg->key != dst_widg->key) {
 					src_widg = src_widg->next;
 					continue;
@@ -137,7 +120,7 @@ void perse_MergeTree(perse_widget_t* dst, perse_widget_t* src) {
 		
 		// didn't find property with same key, try any other widget
 		perse_widget_t* src_widg = src->child;
-		while (src_widg) {
+		if (src_widg) {
 			// merge if type matches
 			if (src_widg->type == dst_widg->type) {
 				perse_MergeTree(dst_widg, src_widg);
@@ -148,18 +131,38 @@ void perse_MergeTree(perse_widget_t* dst, perse_widget_t* src) {
 				goto next;
 			}
 			
+			
+			
 			// otherwise replace
 			perse_widget_t* next = dst_widg->next;
+			
+			perse_SetParent(src_widg, NULL);
+			perse_Substitute(dst_widg, src_widg);
+			
+			perse_DestroyWidget(dst_widg);
+			
+			/*perse_widget_t* next = dst_widg->next;
 			
 			perse_SetParent(dst_widg, NULL);
 			perse_SetParent(src_widg, dst);
 			
-			perse_DestroyWidget(dst_widg);
+			perse_DestroyWidget(dst_widg);*/
 			
 			dst_widg = next;
 			
 			goto skip;
 		}
+		
+		perse_widget_t* next = dst_widg->next;
+		
+		perse_DestroyWidget(dst_widg);
+		
+		dst_widg = next;
+		
+		continue;
+		
+		// TODO: destroy widget here??
+		
 	next:
 		dst_widg = dst_widg->next;
 	skip:
@@ -203,10 +206,7 @@ static void calculate_want(perse_widget_t* widget) {
 			int largest_min = -1;
 			int width_sum = 0;
 	
-			perse_Log("largest_min %i\twidth_sum %i\n", largest_min, width_sum);
-	
 			for (perse_widget_t* c = widget->child; c; c = c->next) {
-				perse_Log("largest_min %i\twidth_sum %i\n", largest_min, width_sum);
 				if (c->constraint_size.min.h > largest_min) {
 					largest_min = c->constraint_size.min.h;
 				}
@@ -220,8 +220,6 @@ static void calculate_want(perse_widget_t* widget) {
 			
 			widget->want_size.max.h = widget->constraint_size.max.h;
 			widget->want_size.max.w = widget->constraint_size.max.w;
-			
-			perse_Log("horiz want %i %i %i %i\n", widget->want_size.min.h, widget->want_size.min.w, widget->want_size.max.h, widget->want_size.max.w);
 			
 		} break;
 		
@@ -339,8 +337,6 @@ static void calculate_size(perse_widget_t* widget) {
 					w->current_size.h = widget->current_size.h;
 				}
 			}
-			
-			perse_Log("horiz is %i %i\n", widget->current_size.w, widget->current_size.h);
 			
 		} break;
 		
@@ -540,17 +536,11 @@ static void apply_changes(perse_widget_t* widget, char recalc_pos) {
 	}
 	
 	if (!widget->system) {
-		perse_Log("creating widget\n");
 		perse_BackendCreateWidget(widget);
 	} else if (recalc_pos) {
-		perse_Log("setting sizepos\n");
 		perse_BackendSetSizePos(widget);
 	}
 	
-	//static int count = 0;
-	//if (count++ > 10) abort();
-	
-	perse_Log("setting props\n");
 	for (perse_property_t* p = widget->property; p; p = p->next) {
 		if (!p->changed) continue;
 		perse_BackendSetProperty(widget, p);

@@ -96,6 +96,10 @@ void perse_DestroyWidget(perse_widget_t* widget) {
 		perse_BackendDestroyWidget(widget);
 	}
 	
+	if (widget->destroy) {
+		widget->destroy(widget->user);
+	}
+	
 	memset(widget, 0, sizeof(*widget));
 	free(widget);
 }
@@ -134,6 +138,23 @@ void perse_SetParent(perse_widget_t* widget, perse_widget_t* parent) {
 	widget->parent = parent;
 }
 
+void perse_Substitute(perse_widget_t* widget, perse_widget_t* substitute) {
+	if (widget->parent->child == widget) {
+		widget->parent->child = substitute;
+	} else {
+		perse_widget_t* sibling = widget->parent->child;
+		while (sibling && sibling->next != widget) sibling = sibling->next;
+		
+		sibling->next = substitute;
+	}
+	
+	substitute->next = widget->next;
+	substitute->parent = widget->parent;
+	
+	widget->parent = NULL;
+	widget->next = NULL;
+}
+
 void perse_AddProperty(perse_widget_t* widget, perse_property_t* property) {
 	property->next = widget->property;
 	widget->property = property;
@@ -150,5 +171,19 @@ void perse_RemoveProperty(perse_widget_t* widget, perse_property_t* property) {
 		if (prev) {
 			prev->next = property->next;
 		}
+	}
+}
+
+void perse_AddChild(perse_widget_t* widget, perse_widget_t* child) {
+	if (!widget->child) {
+		widget->child = child;
+		child->next = NULL;
+		child->parent = widget;
+	} else {
+		perse_widget_t* last = widget->child;
+		while (last->next) last = last->next;
+		last->next = child;
+		child->next = NULL;
+		child->parent = widget;
 	}
 }

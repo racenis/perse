@@ -15,4 +15,7 @@ add_library(persefrontend STATIC
 
     widget.h
     widget.cpp
+	
+    hooks.h
+    hooks.cpp
 )

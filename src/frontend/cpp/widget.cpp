@@ -5,6 +5,7 @@
 
 extern "C" {
 #include "../../library/widget.h"
+#include "../../library/perse.h"
 }
 
 namespace perse {
@@ -37,19 +38,37 @@ Widget::Widget(Property<int>& min_w, Property<int>& min_h,
 	*ptr = widget;
 }
 
+Widget::Widget() {
+	ptr = nullptr;
+}
+
+Widget Widget::Null() {
+	return Widget();
+}
+
+Widget Null = Widget::Null();
+
 Widget& Widget::operator<<(std::initializer_list<Widget> children){
 	for (const auto& widget : children) {
-		perse_SetParent((perse_widget*)widget.ptr, (perse_widget*)this->ptr);
+		if (!widget.ptr) continue;
+		//perse_SetParent((perse_widget*)widget.ptr, (perse_widget*)this->ptr);
+		perse_AddChild((perse_widget*)this->ptr, (perse_widget*)widget.ptr);
 	}
-
+	
 	return *this;
 }
 
+// TODO: check if we actually need this???
 Widget& Widget::operator<<(std::vector<Widget> children) {
 	for (auto widget = children.rbegin(); widget != children.rend(); ++widget) {
+		if (!widget->ptr) continue;
 		perse_SetParent((perse_widget*)widget->ptr, (perse_widget*)this->ptr);
+		//perse_AddChild((perse_widget*)this->ptr, (perse_widget*)widget->ptr);
 	}
-
+	/*for (const auto& widget : children) {
+		perse_AddChild((perse_widget*)this->ptr, (perse_widget*)widget.ptr);
+	}*/
+	
 	return *this;
 }
 
@@ -84,16 +103,41 @@ static void add_prop(perse_widget* widget, perse_name_t name,
 	perse_AddProperty(widget, p);
 }
 
-static std::map<perse_widget*, OnClickCallback> callbacks;
+struct UserInfo {
+	OnClickCallback onclick;
+};
+
 static void add_prop(perse_widget* widget, perse_name_t name,
                      Property<OnClickCallback> value) {
 	if (!value.set()) return;
-	perse_property_t* p = perse_CreatePropertyCallback([](perse_widget_t* w){
-		callbacks[w]();
-	});
+	
+	UserInfo* info;
+	if (widget->user) {
+		info = (UserInfo*)widget->user;
+	} else {
+		info = new UserInfo;
+		widget->user = info;
+		widget->destroy = [](void* user){
+			delete (UserInfo*)user;
+		};
+	}
+	
+	perse_property_t* p;
+	
+	switch (name) {
+		case PERSE_NAME_ON_CLICK:
+			info->onclick = value;
+			p = perse_CreatePropertyCallback([](perse_widget_t* w){
+				((UserInfo*)w->user)->onclick();
+			});
+		break;
+		default:
+			perse_Log("CPP:: unknwn CALLBACK enum: %i\n", name);
+			abort();
+	}
+	
 	p->name = name;
 	perse_AddProperty(widget, p);
-	callbacks[widget] = value;
 }
 
 

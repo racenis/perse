@@ -68,6 +68,7 @@ typedef struct perse_widget {
 	void* system;					//< pointer to win32/motif widget
 	void* data;						//< additional pointer for backend
 	void* user;						//< pointer for user to set
+	void(*destroy)(void*);			//< destroy callback
 	
 	int key;						//< optional layout key
 	
@@ -93,8 +94,12 @@ perse_widget_t* perse_AllocateWidget();
 void perse_DestroyWidget(perse_widget_t*);
 
 void perse_SetParent(perse_widget_t* widget, perse_widget_t* parent);
+void perse_Substitute(perse_widget_t* widget, perse_widget_t* substitute);
 
 void perse_AddProperty(perse_widget_t* widget, perse_property_t* property);
 void perse_RemoveProperty(perse_widget_t* widget, perse_property_t* property);
+
+void perse_AddChild(perse_widget_t* widget, perse_widget_t* child);
+
 
 #endif // PERSE_WIDGET_H

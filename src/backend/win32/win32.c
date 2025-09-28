@@ -490,6 +490,9 @@ PERSE_API void perse_impl_BackendDestroyWidget(perse_widget_t* widget) {
 		
 		case PERSE_WIDGET_ARROW_BUTTON:
 		case PERSE_WIDGET_TEXT_BUTTON:
+			DestroyWindow(widget->system);
+			widget->system = NULL;
+			break;
 		case PERSE_WIDGET_IMAGE_BUTTON:
 		case PERSE_WIDGET_COMBO_BOX:
 		

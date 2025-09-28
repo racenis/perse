@@ -17,8 +17,10 @@ public:
 		   Property<int>&, Property<int>&, Property<int>&, Property<int>&, void**);
 	Widget& operator<<(std::initializer_list<Widget> children);
 	Widget& operator<<(std::vector<Widget> children);
+	static Widget Null();
 protected:
-	void* ptr;
+	Widget();
+	void* ptr = nullptr;
 	std::vector<Widget> children;
 	friend void Render();
 };
@@ -28,6 +30,8 @@ inline std::vector<Widget> Inside(std::vector<Widget> children) {
 }
 
 typedef std::function<void()> OnClickCallback;
+
+extern Widget Null;
 
 enum Direction {
 	LEFT,
