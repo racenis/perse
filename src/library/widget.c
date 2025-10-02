@@ -17,8 +17,14 @@
 	`parent` and `child` points to the first child. The children of a widget are
 	added in a linked list, for this we use `next` pointer, where each child
 	points to its sibling with it.
+	
 	The `system` and `data` pointers are reserved for use in the backend. Treat
 	them as opaque pointers.
+	The `user` pointer can be set by the user and will be transfered between
+	widgets when merging them. The `destroy` callback is called with the `user`
+	pointer when a widget is destroyed and should be used to clean up memory
+	that the `user` pointer points to.
+	
 	Properties are stored in a linked list, first element pointed to by
 	`properties` pointer.
 	To modify parent/child hierarchy and property use the appropriate functions.
@@ -33,7 +39,8 @@
 	
 	DESTROYING A WIDGET
 	
-	
+	Use the `perse_DestroyWidget()` function to destroy a widget allocated by
+	`perse_AllocateWidget()`.
 	
 	ADDITION OF NEW WIDGET TYPES
 	
@@ -41,6 +48,7 @@
 	adding a widget construction function.
 	You will also need to add widget to layout calculation code and in the 
 	backends, if needed.
+	
 */
 
 /// Allocates a new widget.
@@ -69,8 +77,6 @@ perse_widget_t* perse_AllocateWidget() {
 /// well. If you don't want the children to be destroyed, set their parent to 
 /// NULL or some other widget.
 void perse_DestroyWidget(perse_widget_t* widget) {
-	// TODO: call into backend to clean up the widget on their side
-	
 	if (widget->parent) {
 		perse_SetParent(widget, NULL);
 	}
@@ -138,6 +144,10 @@ void perse_SetParent(perse_widget_t* widget, perse_widget_t* parent) {
 	widget->parent = parent;
 }
 
+/// Swaps out a wdiget with a substitute.
+/// Replaces a widget with another widget, while retaining the order in the old
+/// widget's child widget list.
+/// The substitute widget is *not* removed from it's parent, if it has one.
 void perse_Substitute(perse_widget_t* widget, perse_widget_t* substitute) {
 	if (widget->parent->child == widget) {
 		widget->parent->child = substitute;
@@ -155,11 +165,13 @@ void perse_Substitute(perse_widget_t* widget, perse_widget_t* substitute) {
 	widget->next = NULL;
 }
 
+/// Removes a property from a widget.
 void perse_AddProperty(perse_widget_t* widget, perse_property_t* property) {
 	property->next = widget->property;
 	widget->property = property;
 }
 
+/// Adds a property to a widget.
 void perse_RemoveProperty(perse_widget_t* widget, perse_property_t* property) {
 	if (widget->property == property) {
 		// Property is first in the list
@@ -174,7 +186,14 @@ void perse_RemoveProperty(perse_widget_t* widget, perse_property_t* property) {
 	}
 }
 
+/// Adds a child widget to a parent widget.
+/// Essentially same as perse_SetParent(), but appends the child to the end of
+/// the parent's child list.
 void perse_AddChild(perse_widget_t* widget, perse_widget_t* child) {
+	if (child->parent) {
+		perse_SetParent(child, NULL);
+	}
+	
 	if (!widget->child) {
 		widget->child = child;
 		child->next = NULL;

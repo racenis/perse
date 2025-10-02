@@ -9,6 +9,25 @@
 /*
 	For now we'll keep the kinda awful switch statement. Later we can refactor
 	it, so that it is easier to add new widget types.
+	
+	LAYOUT ALGORITHM
+	
+	1. WANT CALCULATION
+
+	We start at the root and recurse until we find leaf widgets. Then we
+	remember the minimum size for each widget and come back to the root, adding
+	up the minimum sizes, until we calculate the minimum size for the root.
+
+	2. SIZE CALCULATION
+
+	We start at the root and, recursively, for each child widget we give it a
+	size, respecting its or its child's minimum size.
+
+	3. POSITION CALCULATION
+
+	We start at the root and recursively calculate the position of each child
+	widget in its parent.
+	
 */
 
 /// Merges widget trees.
@@ -98,9 +117,6 @@ void perse_MergeTree(perse_widget_t* dst, perse_widget_t* src) {
 				if (src_widg->type == dst_widg->type) {
 					perse_MergeTree(dst_widg, src_widg);
 					
-					//perse_SetParent(src_widg, NULL);
-					//perse_DestroyWidget(src_widg);
-					
 					goto next;
 				}
 				
@@ -125,13 +141,8 @@ void perse_MergeTree(perse_widget_t* dst, perse_widget_t* src) {
 			if (src_widg->type == dst_widg->type) {
 				perse_MergeTree(dst_widg, src_widg);
 				
-				//perse_SetParent(src_widg, NULL);
-				//perse_DestroyWidget(src_widg);
-				
 				goto next;
 			}
-			
-			
 			
 			// otherwise replace
 			perse_widget_t* next = dst_widg->next;
@@ -140,13 +151,6 @@ void perse_MergeTree(perse_widget_t* dst, perse_widget_t* src) {
 			perse_Substitute(dst_widg, src_widg);
 			
 			perse_DestroyWidget(dst_widg);
-			
-			/*perse_widget_t* next = dst_widg->next;
-			
-			perse_SetParent(dst_widg, NULL);
-			perse_SetParent(src_widg, dst);
-			
-			perse_DestroyWidget(dst_widg);*/
 			
 			dst_widg = next;
 			
@@ -160,8 +164,6 @@ void perse_MergeTree(perse_widget_t* dst, perse_widget_t* src) {
 		dst_widg = next;
 		
 		continue;
-		
-		// TODO: destroy widget here??
 		
 	next:
 		dst_widg = dst_widg->next;
@@ -505,6 +507,8 @@ static void calculate_position(perse_widget_t* widget) {
 	}
 }
 
+/// Calculates widget layout.
+/// Calculates the layout of widget and its child widgets.
 void perse_CalculateLayout(perse_widget_t* widget) {
 	calculate_want(widget);
 	calculate_size(widget);
@@ -552,6 +556,9 @@ static void apply_changes(perse_widget_t* widget, char recalc_pos) {
 	}
 }
 
+/// Applies changes.
+/// Forwards the changes created by perse_MergeTree() and 
+/// perse_CalculateLayout() to backend.
 void perse_ApplyChanges(perse_widget_t* widget) {
 	apply_changes(widget, 0);
 }

@@ -94,7 +94,9 @@ perse_property_t* perse_CreatePropertyString(const char* string) {
 	return property;
 }
 
-
+/// Creates a new callback property.
+/// @param cb Callback function pointer to be copied into the new property.
+/// @return Pointer to new callback property.
 perse_property_t* perse_CreatePropertyCallback(void (*cb)(perse_widget_t*)) {
 	perse_property_t* property = perse_AllocateProperty();
 	
@@ -104,8 +106,10 @@ perse_property_t* perse_CreatePropertyCallback(void (*cb)(perse_widget_t*)) {
 	return property;
 }
 
-
-
+/// Copies the property value.
+/// Copies the property value from `src` into `dst`. The `dst` property is
+/// marked as `changed`. Whatever value `dst` contains is destroyed. All void*
+/// pointer copies are shallow.
 void perse_CopyPropertyValue(perse_property_t* dst, perse_property_t* src) {
 	clean_property(dst);
 	
@@ -163,6 +167,10 @@ void perse_CopyPropertyValue(perse_property_t* dst, perse_property_t* src) {
 	dst->changed = 1;
 }
 
+/// Compares the values of two properties.
+/// Always returns 0 for void* and void** types (pointer & pointer array), since
+/// a proper comparison cannot be performed.
+/// @return 1 if matches, 0 if doesn't
 int perse_IsPropertyMatching(perse_property_t* p1, perse_property_t* p2) {
 	if (p1->type != p2->type) return 0;
 	switch (p1->type) {
