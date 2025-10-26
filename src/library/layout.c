@@ -17,6 +17,8 @@
 	We start at the root and recurse until we find leaf widgets. Then we
 	remember the minimum size for each widget and come back to the root, adding
 	up the minimum sizes, until we calculate the minimum size for the root.
+	
+	Essentially we're bubbling up the widget constraints to parent widgets.
 
 	2. SIZE CALCULATION
 
@@ -300,35 +302,52 @@ static void calculate_size(perse_widget_t* widget) {
 	// for each child, calculate their SIZE based on their WANT
 	switch (widget->type) {
 		case PERSE_WIDGET_HORIZONTAL_LAYOUT: {
-			// first we'll try to divide the height equally
-			int widgets = 0;
-			for (perse_widget_t* w = widget->child; w; w = w->next) widgets++;
-			int average_size = widget->current_size.w / widgets;
 			
-			// then we'll see if any widget doesn't like that height
-			int used_width = 0;
-			int widgets_left = 0;
-			for (perse_widget_t* w = widget->child; w; w = w->next) {
-				if (w->want_size.max.w < average_size) {
-					w->current_size.w = w->want_size.max.w;
-					used_width += w->current_size.w; //w->want_size.max.w;
-				} else if (w->want_size.min.w > average_size) {
-					w->current_size.w = w->want_size.min.w;
-					used_width += w->current_size.w; //w->want_size.max.w;
-				} else {
-					w->current_size.w = -1;
-					widgets_left++;
+			// mark all as unprocessed
+			for (perse_widget_t* w = widget->child; w; w = w->next) w->current_size.w = -1;
+			
+			for (;;) {
+	
+				// divide free space equally among the widgets
+				int widgets_left = 0;
+				int used_width = 0;
+				for (perse_widget_t* w = widget->child; w; w = w->next) {
+					if (w->current_size.w == -1) {
+						widgets_left++;
+					} else {
+						used_width += w->current_size.w;
+					}
 				}
-			}
-			
-			// then we'll re-calculate the equal height again
-			if (widgets_left) average_size = (widget->current_size.w - used_width)/widgets_left; //used_width/widgets_left;
-			
-			// what if average_size violates any child's constraint?
-			// idk, maybe try a greedy algorithm, idk
-			for (perse_widget_t* w = widget->child; w; w = w->next) {
-				if (w->current_size.w != -1) continue;
-				w->current_size.w = average_size;
+				
+				if (!widgets_left) break;
+				
+				int width_left = widget->current_size.w - used_width;
+				int avg_width = width_left / widgets_left;
+				
+				// check if any constraint violated
+				char violated = 0;
+				for (perse_widget_t* w = widget->child; w; w = w->next) {
+					if (w->current_size.w != -1) {
+						continue;
+					} else if (w->want_size.max.w != -1 && w->want_size.max.w < avg_width) {
+						w->current_size.w = w->want_size.max.w;
+						violated = 1;
+					} else if (w->want_size.max.w != -1 && w->want_size.min.w > avg_width) {
+						w->current_size.w = w->want_size.min.w;
+						violated = 1;
+					}
+				}
+
+				if (violated) continue;
+				
+				// assign average size to remaining widgets
+				for (perse_widget_t* w = widget->child; w; w = w->next) {
+					if (w->current_size.w < 0) {
+						w->current_size.w = avg_width;
+					}
+				}
+				
+				break;
 			}
 			
 			// set the heights
@@ -343,47 +362,53 @@ static void calculate_size(perse_widget_t* widget) {
 		} break;
 		
 		case PERSE_WIDGET_VERTICAL_LAYOUT: {
-			// first we'll try to divide the height equally
-			int widgets = 0;
-			for (perse_widget_t* w = widget->child; w; w = w->next) widgets++;
-			int average_size = widget->current_size.h / widgets;
 			
-			// then we'll see if any widget doesn't like that height
-			int used_height = 0;
-			int widgets_left = 0;
-			for (perse_widget_t* w = widget->child; w; w = w->next) {
-				if (w->want_size.max.h < average_size) {
-					w->current_size.h = w->want_size.max.h;
-					used_height += w->current_size.h; //w->want_size.max.h;
-				} else if (w->want_size.min.h > average_size) {
-					w->current_size.h = w->want_size.min.h;
-					used_height += w->current_size.h; //w->want_size.max.h;
-				} else {
-					w->current_size.h = -1;
-					widgets_left++;
+			// mark all as unprocessed
+			for (perse_widget_t* w = widget->child; w; w = w->next) w->current_size.h = -1;
+			
+			for (;;) {
+	
+				// divide free space equally among the widgets
+				int widgets_left = 0;
+				int used_height = 0;
+				for (perse_widget_t* w = widget->child; w; w = w->next) {
+					if (w->current_size.h == -1) {
+						widgets_left++;
+					} else {
+						used_height += w->current_size.h;
+					}
 				}
+				
+				if (!widgets_left) break;
+				
+				int height_left = widget->current_size.h - used_height;
+				int avg_height = height_left / widgets_left;
+				
+				// check if any constraint violated
+				char violated = 0;
+				for (perse_widget_t* w = widget->child; w; w = w->next) {
+					if (w->current_size.h != -1) {
+						continue;
+					} else if (w->want_size.max.h != -1 && w->want_size.max.h < avg_height) {
+						w->current_size.h = w->want_size.max.h;
+						violated = 1;
+					} else if (w->want_size.max.h != -1 && w->want_size.min.h > avg_height) {
+						w->current_size.h = w->want_size.min.h;
+						violated = 1;
+					}
+				}
+
+				if (violated) continue;
+				
+				// assign average size to remaining widgets
+				for (perse_widget_t* w = widget->child; w; w = w->next) {
+					if (w->current_size.h < 0) {
+						w->current_size.h = avg_height;
+					}
+				}
+				
+				break;
 			}
-			
-			// then we'll re-calculate the equal height again
-			if (widgets_left) average_size = used_height/widgets_left;
-			
-			// what if average_size violates any child's constraint?
-			// idk, maybe try a greedy algorithm, idk
-			for (perse_widget_t* w = widget->child; w; w = w->next) {
-				if (w->current_size.h != -1) continue;
-				w->current_size.h = average_size;
-			}
-			
-			// okay actually for the heights a better way to calculate would be
-			// this:
-			// - set current_size.h to -1 for all (to mark as unprocessed)
-			// - calculate the average height
-			// - check if all accept that height
-			//   - for those that don't set best acceptable height
-			// - then re-calculate the height again and continue until either
-			//   all widgets have their heights set except for those that accept
-			//   the average
-			// - finally set those to the average height
 			
 			// set the widths
 			for (perse_widget_t* w = widget->child; w; w = w->next) {
@@ -394,6 +419,8 @@ static void calculate_size(perse_widget_t* widget) {
 				}
 			}
 		} break;
+		
+		// TODO: implement
 		case PERSE_WIDGET_GRID_LAYOUT:
 		case PERSE_WIDGET_FLOW_LAYOUT:
 		case PERSE_WIDGET_SPLITTER_LAYOUT:
@@ -470,6 +497,8 @@ static void calculate_position(perse_widget_t* widget) {
 				current_h += w->current_size.h;
 			}
 		} break;
+		
+		// TODO: implement
 		case PERSE_WIDGET_GRID_LAYOUT:
 		case PERSE_WIDGET_FLOW_LAYOUT:
 		case PERSE_WIDGET_SPLITTER_LAYOUT:

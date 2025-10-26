@@ -150,12 +150,6 @@ Widget ArrowButton(ArrowButtonProps props) {
 Widget Button(ButtonProps props) {
 	INIT_WIDGET(PERSE_WIDGET_TEXT_BUTTON)
 	
-	// TODO: figure out where to store callback!
-	// props.onclick;
-	
-	// maybe we can create a callback data struct?
-	// add it as a void*, then add a event_callback to widget?
-	
 	add_prop(widget, PERSE_NAME_TEXT, props.text);
 	add_prop(widget, PERSE_NAME_ENABLED, props.enabled);
 	add_prop(widget, PERSE_NAME_ON_CLICK, props.onclick);
