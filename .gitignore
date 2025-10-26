@@ -31,9 +31,17 @@
 *.out
 *.app
 
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
 
+# Build directories
+build/
+*/build/
+**/build/
+
+# Other random directories
 scratchpad/
-src/library/build/
-src/backend/motif/build/
-src/backend/win32/build/
-src/frontend/cpp/build/
