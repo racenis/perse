@@ -2,6 +2,11 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <commctrl.h>
+
+#pragma comment(linker,"\"/manifestdependency:type='win32' \
+name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
+processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 #ifdef _WIN32
   #define PERSE_API __declspec(dllexport)
@@ -50,7 +55,7 @@ static perse_widget_t* parent(perse_widget_t* widg) {
 
 static perse_property_t* prop(perse_name_t name, perse_widget_t* widg) {
 	perse_property_t* p = widg->property;
-	while (p->name != name && (p = p->next));
+	while (p && p->name != name && (p = p->next));
 	return p;
 }
 
@@ -191,7 +196,7 @@ static LRESULT CALLBACK perse_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hwnd, &ps);
 
-		FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW+1));
+		//FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW+1));
 
 		EndPaint(hwnd, &ps);
 	} return 0;
@@ -217,6 +222,13 @@ PERSE_API void perse_impl_BackendCreateWidget(perse_widget_t* widget) {
 			break;
 		
 		case PERSE_WIDGET_WINDOW: {
+			
+			// TODO: check if this actually works
+			INITCOMMONCONTROLSEX icc = {0};
+			icc.dwSize = sizeof(icc);
+			icc.dwICC = ICC_WIN95_CLASSES;
+			InitCommonControlsEx(&icc);
+			
 			perse_property_t* p = NULL;
 			
 			// gather parameters
@@ -237,6 +249,8 @@ PERSE_API void perse_impl_BackendCreateWidget(perse_widget_t* widget) {
 
 			wc.lpfnWndProc   = perse_WindowProc;
 			wc.hInstance     = GetModuleHandle(NULL);
+			wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+			wc.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
 			wc.lpszClassName = CLASS_NAME;
 
 			RegisterClass(&wc);
@@ -361,7 +375,7 @@ PERSE_API void perse_impl_BackendCreateWidget(perse_widget_t* widget) {
 			HWND hwnd = CreateWindow( 
 				"BUTTON",
 				title,
-				WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+				WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
 				widget->actual_pos.x, widget->actual_pos.y,
 				widget->current_size.w, widget->current_size.h,
 				w->system,
@@ -375,9 +389,12 @@ PERSE_API void perse_impl_BackendCreateWidget(perse_widget_t* widget) {
 				return;
 			}
 
+			HFONT font = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+			SendMessage(hwnd, WM_SETFONT, (WPARAM)font, TRUE);
+			
 			widget->system = hwnd;
 			
-			ShowWindow(hwnd, SW_NORMAL);
+			//ShowWindow(hwnd, SW_NORMAL);
 		} break;
 		case PERSE_WIDGET_IMAGE_BUTTON: {
 			// TODO: implement
@@ -389,6 +406,60 @@ PERSE_API void perse_impl_BackendCreateWidget(perse_widget_t* widget) {
 		} break;
 		case PERSE_WIDGET_COMBO_BOX: {
 			// TODO: implement
+			
+			/*
+			
+			*/
+			
+		} break;
+		case PERSE_WIDGET_LIST_BOX: {
+			// TODO: implement
+			
+			log("creating the listybox\n");
+			
+			
+			perse_widget_t* w = window(widget);
+			
+			HWND hwnd = CreateWindowEx(
+				WS_EX_CLIENTEDGE,
+				"LISTBOX",
+				"",
+				WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY,
+				widget->actual_pos.x, widget->actual_pos.y,
+				widget->current_size.w, widget->current_size.h,
+				w->system,
+				(HMENU)(long long)AllocateIndex(widget),
+				(HINSTANCE)GetWindowLongPtr(w->system, GWLP_HINSTANCE), 
+				NULL
+			);
+			
+			if (hwnd == NULL) {
+				log("ERROR WIN32:: LIST_BOX CreateWindow failed");
+				return;
+			}
+
+			widget->system = hwnd;
+			
+			HFONT font = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+			SendMessage(hwnd, WM_SETFONT, (WPARAM)font, TRUE);
+			
+			for (perse_widget_t* c = widget->child; c; c = c->next) {
+
+				perse_property_t* p = NULL;
+				
+				const char* title = "list item";
+				if (p = prop(PERSE_NAME_TITLE, c)) {
+					if (p->type != PERSE_TYPE_STRING) {
+						log("ERROR WIN32:: WIDGET_ITEM property TITLE not string");
+					} else {
+						title = p->string;
+						p->changed = 0;
+					}
+				}
+				
+				SendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)title);
+				log("text:%s\tbut also:%i\n", title, c->type);
+			}
 			
 			/*
 			

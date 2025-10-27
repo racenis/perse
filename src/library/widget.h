@@ -9,17 +9,19 @@ typedef enum {
 	PERSE_WIDGET_ABSOLUTE_LAYOUT,
 	PERSE_WIDGET_HORIZONTAL_LAYOUT,
 	PERSE_WIDGET_VERTICAL_LAYOUT,
-	PERSE_WIDGET_GRID_LAYOUT,
-	PERSE_WIDGET_FLOW_LAYOUT,
-	PERSE_WIDGET_SPLITTER_LAYOUT,
-	PERSE_WIDGET_FLEX_LAYOUT,
+	PERSE_WIDGET_GRID_LAYOUT,		// TODO: decide what it should do exactly
+	PERSE_WIDGET_FLOW_LAYOUT,		// TODO: ditto
+	PERSE_WIDGET_SPLITTER_LAYOUT,	// TODO: ditto
+	PERSE_WIDGET_FLEX_LAYOUT,		// TODO: ditto
 	
 	PERSE_WIDGET_WINDOW,
 	PERSE_WIDGET_MENU_BAR,
 	PERSE_WIDGET_STATUS_BAR,
 	
+	PERSE_WIDGET_ITEM,
+	
 	PERSE_WIDGET_TAB_PANEL,
-	PERSE_WIDGET_TAB_GROUP,
+	PERSE_WIDGET_TAB_GROUP,			// TODO: check if we actually need it
 	
 	PERSE_WIDGET_PANEL,
 	
@@ -69,7 +71,7 @@ typedef struct perse_widget {
 	
 	void* system;					//< pointer to win32/motif widget
 	void* data;						//< additional pointer for backend
-	void* user;						//< pointer for user to set
+	void* user;						//< pointer for user (frontend) to set
 	void(*destroy)(void*);			//< destroy callback
 	
 	int key;						//< optional layout key

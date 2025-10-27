@@ -21,7 +21,11 @@ set_target_properties(perse_backend_static PROPERTIES
     PREFIX ""  # avoid libbackend.a in Emscripten
 )
 
+target_link_libraries(perse_backend_shared PRIVATE comctl32)
+# idk if static needs it ??
+
 # Special case for Emscripten: don’t build shared lib
+# WAIT WHY do we build for emscripten??? it doesn't the win32!!!!
 if (EMSCRIPTEN)
     set_target_properties(perse_backend_shared PROPERTIES EXCLUDE_FROM_ALL TRUE)
 endif()

@@ -16,7 +16,7 @@ typedef enum {
 typedef enum {
 	PERSE_NAME_INVALID = 0,
 	
-	PERSE_NAME_TITLE,
+	PERSE_NAME_TITLE,		// TODO: check if needed (maybe keep just TEXT)
 	PERSE_NAME_TEXT,
 	
 	PERSE_NAME_ENABLED,

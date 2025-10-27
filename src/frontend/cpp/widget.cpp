@@ -229,6 +229,24 @@ Widget GroupPanel(GroupPanelProps props) {
 }
 
 
+Widget Item(ItemProps props) {
+	Property<int> d;
+	
+	perse_widget* widget;
+	
+	// didn't really think this one through..
+	Widget widget_class(d, d, d, d, d, d, d, d, (void**)&widget);
+	widget->type = PERSE_WIDGET_ITEM;
+	
+	add_prop(widget, PERSE_NAME_TITLE, props.title);
+	
+	// we'll also add icons, etc. later
+	
+	// also some kind of data pointer??
+	
+	return widget_class;
+}
+
 
 Widget AbsoluteLayout(AbsoluteLayoutProps props) {
 	INIT_WIDGET(PERSE_WIDGET_ABSOLUTE_LAYOUT)

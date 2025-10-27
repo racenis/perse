@@ -230,8 +230,6 @@ struct ListBoxProps {
 	Property<int> x;
 	Property<int> y;
 	
-	Property<std::vector<std::string>> items;
-	Property<std::vector<void*>> value;
 	Property<std::vector<OnClickCallback>> onselect;
 };
 
@@ -270,6 +268,10 @@ struct GroupPanelProps {
 	Property<std::string> text;
 };
 
+
+struct ItemProps {
+	Property<std::string> title;
+};
 
 
 struct AbsoluteLayoutProps {
@@ -312,6 +314,8 @@ Widget ListBox(ListBoxProps);
 Widget TabGroup(TabGroupProps);
 Widget TabPanel(TabPanelProps);
 Widget GroupPanel(GroupPanelProps);
+
+Widget Item(ItemProps);
 
 Widget AbsoluteLayout(AbsoluteLayoutProps);
 Widget HorizontalLayout(AbsoluteLayoutProps);

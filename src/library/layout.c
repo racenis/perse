@@ -255,6 +255,13 @@ static void calculate_want(perse_widget_t* widget) {
 		case PERSE_WIDGET_SPLITTER_LAYOUT:
 		case PERSE_WIDGET_FLEX_LAYOUT:
 		
+		// child widgets irrelevant; copy contraint into want
+		case PERSE_WIDGET_ITEM:
+		case PERSE_WIDGET_LIST_BOX:
+			memcpy(&widget->want_size, &widget->constraint_size,
+				sizeof(widget->want_size));
+		break;
+		
 		// window just stretches its child to be same size as it is
 		case PERSE_WIDGET_WINDOW:
 			for (perse_widget_t* c = widget->child; c; c = c->next) {
@@ -426,6 +433,11 @@ static void calculate_size(perse_widget_t* widget) {
 		case PERSE_WIDGET_SPLITTER_LAYOUT:
 		case PERSE_WIDGET_FLEX_LAYOUT:
 		
+		// do not process; child layout irrelevant
+		case PERSE_WIDGET_ITEM:
+		case PERSE_WIDGET_LIST_BOX:
+		break;
+		
 		// idk, this might cause issues if more than one child for window
 		case PERSE_WIDGET_WINDOW:
 			for (perse_widget_t* w = widget->child; w; w = w->next) {
@@ -503,6 +515,11 @@ static void calculate_position(perse_widget_t* widget) {
 		case PERSE_WIDGET_FLOW_LAYOUT:
 		case PERSE_WIDGET_SPLITTER_LAYOUT:
 		case PERSE_WIDGET_FLEX_LAYOUT:
+		
+		// do not process; child layout irrelevant
+		case PERSE_WIDGET_ITEM:
+		case PERSE_WIDGET_LIST_BOX:
+		return;
 		
 		case PERSE_WIDGET_ABSOLUTE_LAYOUT:
 		default:
