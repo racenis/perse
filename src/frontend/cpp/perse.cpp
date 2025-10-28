@@ -36,10 +36,33 @@ void Reflow() {
 	need_reflow = true;
 }
 
+// leaving this debug code here until we implement a better tree debug printing
+// function in the C part of the library
+void recurse(perse_widget_t* widg) {
+	if (widg->type == PERSE_WIDGET_LIST_BOX) {
+		std::cout <<"---\n";
+		for (perse_widget_t* c = widg->child; c; c = c->next){
+			for (perse_property_t* p = c->property; p; p = p->next) {
+				if (p->name != PERSE_NAME_TITLE) continue;
+				std::cout << "pp: " << p->string << std::endl;
+			}
+			
+		}
+		std::cout <<"===\n";
+		}
+	
+	
+	for (perse_widget_t* c = widg->child; c; c = c->next){
+		recurse(c);
+	}
+}
+
 bool Wait() {
 	if (!current_root) {
 		auto root_widg = root_func();
 		current_root = (perse_widget*)root_widg.ptr;
+		
+		//recurse(current_root);
 		
 		perse_CalculateLayout(current_root);
 		perse_ApplyChanges(current_root);
@@ -55,7 +78,13 @@ bool Wait() {
 		auto root_widg = root_func();
 		perse_widget* new_root = (perse_widget*)root_widg.ptr;
 
+		//std::cout << "\nprev:" << std::endl;
+		//recurse(current_root);
+		//std::cout << "\nnew:" << std::endl;
+		//recurse(new_root);
 		perse_MergeTree(current_root, new_root);
+		//recurse(current_root);
+		//std::cout << "\nmerged:" << std::endl;
 	}
 	
 	if (need_render || need_reflow) {

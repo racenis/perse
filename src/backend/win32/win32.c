@@ -59,6 +59,15 @@ static perse_property_t* prop(perse_name_t name, perse_widget_t* widg) {
 	return p;
 }
 
+static int index_in_parent(perse_widget_t* widg) {
+	int index = 0;
+	for (perse_widget_t* it = widg->parent->child; it; it = it->next) {
+		if (it == widg) return index;
+		index++;
+	}
+	return -1;
+}
+
 typedef struct {
 	perse_widget_t* widget;
 } win32_widget_t;
@@ -123,16 +132,43 @@ static LRESULT CALLBACK perse_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 		
 		perse_widget_t* widget = LookupWidget(wmId);
 		
-		switch (wmEvent) {
-			case BN_CLICKED: {
-				perse_property_t* p = prop(PERSE_NAME_ON_CLICK, widget);
-				if (!p) {
-					log("ERROR WIN32:: perse_WindowProc button on click missing\n");
-				} else if (p->type != PERSE_TYPE_CALLBACK) {
-					log("ERROR WIN32:: perse_WindowProc button on click wrong type\n");
-				} else {
-					p->callback(widget);
-				}
+		switch (widget->type) {
+			
+			// button events
+			case PERSE_WIDGET_TEXT_BUTTON:
+			switch (wmEvent) {
+				case BN_CLICKED: {
+					perse_property_t* p = prop(PERSE_NAME_ON_CLICK, widget);
+					if (!p) {
+						log("ERROR WIN32:: perse_WindowProc button on click missing\n");
+					} else if (p->type != PERSE_TYPE_CALLBACK) {
+						log("ERROR WIN32:: perse_WindowProc button on click wrong type\n");
+					} else {
+						p->callback(widget);
+					}
+				} break;
+			} break;
+			
+			// listbox events
+			case PERSE_WIDGET_LIST_BOX:
+			switch (wmEvent) {
+				case LBN_SELCHANGE: {
+					
+					int index = SendMessage(widget->system, LB_GETCURSEL, 0, 0);
+					
+					//log("new index: %i\n", index);
+					
+					// TODO: implement the thing
+					/*perse_property_t* p = prop(PERSE_NAME_ON_CLICK, widget);
+					if (!p) {
+						log("ERROR WIN32:: perse_WindowProc button on click missing\n");
+					} else if (p->type != PERSE_TYPE_CALLBACK) {
+						log("ERROR WIN32:: perse_WindowProc button on click wrong type\n");
+					} else {
+						p->callback(widget);
+					}*/
+					
+				} break;
 			} break;
 		}
 	} break;
@@ -321,6 +357,49 @@ PERSE_API void perse_impl_BackendCreateWidget(perse_widget_t* widget) {
 		} break;
 		
 		
+		case PERSE_WIDGET_ITEM: {
+			if (!widget->parent) log("ERROR WIN32:: item has no parent");
+			
+			// !! insertion bug? debug!
+			/*for (perse_widget_t* c = widget->parent->child; c; c = c->next){
+				perse_property_t* p = prop(PERSE_NAME_TITLE, c);
+				log("child: %s\n", p->string);
+			}*/
+			
+			switch (widget->parent->type) {
+			case PERSE_WIDGET_LIST_BOX: {
+				perse_property_t* p = NULL;
+				
+				const char* title = "list item";
+				if (p = prop(PERSE_NAME_TITLE, widget)) {
+					if (p->type != PERSE_TYPE_STRING) {
+						log("ERROR WIN32:: WIDGET_ITEM property TITLE not string");
+					} else {
+						title = p->string;
+						p->changed = 0;
+					}
+				}
+				
+				void* listbox = widget->parent->system;
+				int index = index_in_parent(widget);
+				
+				int insert = SendMessage(listbox, LB_INSERTSTRING, (WPARAM)index, (LPARAM)title);
+				SendMessage(listbox, LB_SETITEMDATA, insert, (LPARAM)widget);
+				
+				//widget->system = (void*)SendMessage(, LB_ADDSTRING, 0, (LPARAM)title);
+				
+				// system needs to be set to non-null
+				widget->system = (void*)(long long)index + 1;
+			} break;
+			default:
+				log("ERROR WIN32:: item parent unsupported type '%i'\n",
+					widget->parent->type);
+			}
+		
+			// TODO: do a switch here based on parent type
+		
+		} break;
+		
 		case PERSE_WIDGET_TAB_PANEL: {
 			// TODO: implement
 			
@@ -412,12 +491,7 @@ PERSE_API void perse_impl_BackendCreateWidget(perse_widget_t* widget) {
 			*/
 			
 		} break;
-		case PERSE_WIDGET_LIST_BOX: {
-			// TODO: implement
-			
-			log("creating the listybox\n");
-			
-			
+		case PERSE_WIDGET_LIST_BOX: {			
 			perse_widget_t* w = window(widget);
 			
 			HWND hwnd = CreateWindowEx(
@@ -442,28 +516,6 @@ PERSE_API void perse_impl_BackendCreateWidget(perse_widget_t* widget) {
 			
 			HFONT font = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 			SendMessage(hwnd, WM_SETFONT, (WPARAM)font, TRUE);
-			
-			for (perse_widget_t* c = widget->child; c; c = c->next) {
-
-				perse_property_t* p = NULL;
-				
-				const char* title = "list item";
-				if (p = prop(PERSE_NAME_TITLE, c)) {
-					if (p->type != PERSE_TYPE_STRING) {
-						log("ERROR WIN32:: WIDGET_ITEM property TITLE not string");
-					} else {
-						title = p->string;
-						p->changed = 0;
-					}
-				}
-				
-				SendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)title);
-				log("text:%s\tbut also:%i\n", title, c->type);
-			}
-			
-			/*
-			
-			*/
 			
 		} break;
 		
@@ -555,6 +607,31 @@ PERSE_API void perse_impl_BackendDestroyWidget(perse_widget_t* widget) {
 		case PERSE_WIDGET_FLEX_LAYOUT:
 			// layouts don't need anything!!! fake widgets
 			break;
+				
+		case PERSE_WIDGET_ITEM: {
+			if (!widget->parent) log("ERROR WIN32:: item has no parent");
+			
+			switch (widget->parent->type) {
+			case PERSE_WIDGET_LIST_BOX: {
+				void* listbox = widget->parent->system;
+					
+				int count = (int)SendMessage(listbox, LB_GETCOUNT, 0, 0);
+				if (count == LB_ERR) log("ERROR WIN32:: LB_GETCOUNT return LB_ERR");
+				
+				int index = -1;
+				for (int i = 0; i < count; i++) {
+					LPARAM data = SendMessage(listbox, LB_GETITEMDATA, i, 0);
+					if (data == (LPARAM)widget) {
+						SendMessage(listbox, LB_DELETESTRING, i, 0);
+						break;
+					}
+				}
+			} break;
+			default:
+				log("ERROR WIN32:: item parent unsupported type '%i'\n",
+					widget->parent->type);
+			}
+		}
 		
 		case PERSE_WIDGET_WINDOW:
 		case PERSE_WIDGET_MENU_BAR:
@@ -567,9 +644,6 @@ PERSE_API void perse_impl_BackendDestroyWidget(perse_widget_t* widget) {
 		
 		case PERSE_WIDGET_ARROW_BUTTON:
 		case PERSE_WIDGET_TEXT_BUTTON:
-			DestroyWindow(widget->system);
-			widget->system = NULL;
-			break;
 		case PERSE_WIDGET_IMAGE_BUTTON:
 		case PERSE_WIDGET_COMBO_BOX:
 		
@@ -585,6 +659,11 @@ PERSE_API void perse_impl_BackendDestroyWidget(perse_widget_t* widget) {
 		case PERSE_WIDGET_PROPERTY_LIST:
 		
 		case PERSE_WIDGET_TREE_VIEW:
+		default:
+			if (!widget->system) log("ERROR WIN32:: widg t %i no system??\n", widget->type);
+			DestroyWindow(widget->system);
+			widget->system = NULL;
+			break;
 	}
 }
 
@@ -609,6 +688,82 @@ PERSE_API void perse_impl_BackendSetProperty(perse_widget_t* widget, perse_prope
 		case PERSE_WIDGET_STATUS_BAR:
 		
 		case PERSE_WIDGET_TAB_PANEL:
+		
+		case PERSE_WIDGET_ITEM: {
+			if (!widget->parent) log("ERROR WIN32:: item has no parent");
+			
+			switch (widget->parent->type) {
+			case PERSE_WIDGET_LIST_BOX: switch (p->name) {
+				case PERSE_NAME_TITLE: {
+					perse_property_t* p = NULL;
+				
+					const char* title = "list item";
+					if (p = prop(PERSE_NAME_TITLE, widget)) {
+						if (p->type != PERSE_TYPE_STRING) {
+							log("ERROR WIN32:: WIDGET_ITEM property TITLE not string");
+						} else {
+							title = p->string;
+							p->changed = 0;
+						}
+					}
+					
+					
+
+					void* listbox = widget->parent->system;
+					
+					int count = (int)SendMessage(listbox, LB_GETCOUNT, 0, 0);
+					if (count == LB_ERR) log("ERROR WIN32:: LB_GETCOUNT return LB_ERR");
+					
+					int index = -1;
+					for (int i = 0; i < count; i++) {
+						LPARAM data = SendMessage(listbox, LB_GETITEMDATA, i, 0);
+						if (data == (LPARAM)widget) {
+							index = i;
+							break;
+						}
+					}
+					
+					if (index == -1) log("ERROR WIN32:: listbox item title update not found");
+					
+				
+				
+				
+					char otitle[256];
+					SendMessage(listbox, LB_GETTEXT, (WPARAM)index, (LPARAM)otitle);
+				
+					
+					// win32 API doesn't allow changing the text of a listbox
+					// item, so we have to re-create it
+					LRESULT selected = SendMessage(listbox, LB_GETSEL, (WPARAM)index, 0);
+
+					SendMessage(listbox, LB_DELETESTRING, (WPARAM)index, 0);
+					index = SendMessage(listbox,
+										LB_INSERTSTRING,
+										(WPARAM)index,
+										(LPARAM)title);
+					SendMessage(listbox, LB_SETITEMDATA, index, (LPARAM)widget);
+					
+					if (selected > 0) {
+						SendMessage(listbox, LB_SETSEL, TRUE, index);
+					}
+					
+					// system needs to be set to non-null
+					widget->system = (void*)(long long)index + 1;
+				} break;
+				
+				default:
+				
+					break;
+			}
+			break;
+			default:
+				log("ERROR WIN32:: item parent unsupported type '%i'\n",
+					widget->parent->type);
+			}
+		
+			// TODO: do a switch here based on parent type
+		
+		} break;
 		
 		case PERSE_WIDGET_GROUP_PANEL:
 		case PERSE_WIDGET_SCROLL_PANEL:
@@ -653,6 +808,10 @@ PERSE_API void perse_impl_BackendSetSizePos(perse_widget_t* widget) {
 		case PERSE_WIDGET_FLEX_LAYOUT:
 			// layouts don't need anything!!! fake widgets
 			break;
+			
+		case PERSE_WIDGET_ITEM:
+			// also fake item
+			break;
 		
 		// I think that for these things in here in the win32 we could just have
 		// like a single thing? and that single thing would just change for all.
@@ -670,6 +829,7 @@ PERSE_API void perse_impl_BackendSetSizePos(perse_widget_t* widget) {
 		case PERSE_WIDGET_GROUP_PANEL:
 		case PERSE_WIDGET_SCROLL_PANEL:
 		
+		case PERSE_WIDGET_LIST_BOX:
 		case PERSE_WIDGET_ARROW_BUTTON:
 		case PERSE_WIDGET_TEXT_BUTTON:
 			MoveWindow(

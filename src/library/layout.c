@@ -177,7 +177,7 @@ void perse_MergeTree(perse_widget_t* dst, perse_widget_t* src) {
 	perse_widget_t* src_widg = src->child;
 	while (src_widg) {
 		perse_widget_t* next = src_widg->next;
-		perse_SetParent(src_widg, dst);
+		perse_AddChild(dst, src_widg);
 		src_widg = next;
 	}
 	
