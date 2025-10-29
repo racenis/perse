@@ -125,6 +125,8 @@ void perse_MergeTree(perse_widget_t* dst, perse_widget_t* src) {
 				// otherwise replace
 				perse_widget_t* next = dst_widg->next;
 				
+				perse_BackendDestroyWidget(dst_widg);
+				
 				perse_SetParent(dst_widg, NULL);
 				perse_SetParent(src_widg, dst);
 				
@@ -148,6 +150,8 @@ void perse_MergeTree(perse_widget_t* dst, perse_widget_t* src) {
 			
 			// otherwise replace
 			perse_widget_t* next = dst_widg->next;
+			
+			perse_BackendDestroyWidget(dst_widg);
 			
 			perse_SetParent(src_widg, NULL);
 			perse_Substitute(dst_widg, src_widg);
@@ -436,6 +440,7 @@ static void calculate_size(perse_widget_t* widget) {
 		// do not process; child layout irrelevant
 		case PERSE_WIDGET_ITEM:
 		case PERSE_WIDGET_LIST_BOX:
+		case PERSE_WIDGET_TEXT_BOX:
 		break;
 		
 		// idk, this might cause issues if more than one child for window
@@ -519,6 +524,7 @@ static void calculate_position(perse_widget_t* widget) {
 		// do not process; child layout irrelevant
 		case PERSE_WIDGET_ITEM:
 		case PERSE_WIDGET_LIST_BOX:
+		case PERSE_WIDGET_TEXT_BOX:
 		return;
 		
 		case PERSE_WIDGET_ABSOLUTE_LAYOUT:

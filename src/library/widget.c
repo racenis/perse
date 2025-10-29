@@ -77,6 +77,14 @@ perse_widget_t* perse_AllocateWidget() {
 /// well. If you don't want the children to be destroyed, set their parent to 
 /// NULL or some other widget.
 void perse_DestroyWidget(perse_widget_t* widget) {
+	
+	// some widget types need the parent pointer to be intact in order to be
+	// properly cleared out of the backend (like the win32 list items)
+	if (widget->system) {
+		perse_BackendDestroyWidget(widget);
+	}
+	
+	// *now* we can clear out the parent pointer
 	if (widget->parent) {
 		perse_SetParent(widget, NULL);
 	}
@@ -97,11 +105,7 @@ void perse_DestroyWidget(perse_widget_t* widget) {
 		perse_DestroyProperty(property);
 		property = next;
 	}
-	
-	if (widget->system) {
-		perse_BackendDestroyWidget(widget);
-	}
-	
+		
 	if (widget->destroy) {
 		widget->destroy(widget->user);
 	}

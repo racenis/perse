@@ -24,6 +24,8 @@ typedef enum {
 	PERSE_NAME_CALLBACK,
 	
 	PERSE_NAME_ON_CLICK,
+	PERSE_NAME_ON_SUBMIT,
+	PERSE_NAME_ON_CHANGE,
 	PERSE_NAME_ON_RESIZE,
 } perse_name_t;
 
@@ -40,8 +42,8 @@ typedef struct perse_property {
 		char boolean;
 		char* string;
 		char** string_array;
-		void (*callback)(perse_widget_t*);
-		void (**callback_array)(perse_widget_t*);
+		void (*callback)(perse_widget_t*, struct perse_property*); // TODO: typedef the callback type
+		void (**callback_array)(perse_widget_t*, struct perse_property*);
 		void* pointer;
 		void** pointer_array;
 	};
@@ -56,7 +58,7 @@ perse_property_t* perse_CreatePropertyInteger(int);
 perse_property_t* perse_CreatePropertyBoolean(char);
 perse_property_t* perse_CreatePropertyString(const char*);
 
-perse_property_t* perse_CreatePropertyCallback(void (*)(perse_widget_t*));
+perse_property_t* perse_CreatePropertyCallback(void (*)(perse_widget_t*, struct perse_property*));
 
 // actually we should have also MovePropertyValue and use that during merges
 void perse_CopyPropertyValue(perse_property_t*, perse_property_t*);

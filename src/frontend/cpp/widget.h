@@ -30,6 +30,10 @@ inline std::vector<Widget> Inside(std::vector<Widget> children) {
 }
 
 typedef std::function<void()> OnClickCallback;
+typedef std::function<void()> OnSubmitCallback;
+typedef std::function<void(bool)> OnChangeBoolCallback;
+typedef std::function<void(int)> OnChangeIntCallback;
+typedef std::function<void(std::string)> OnChangeStringCallback;
 
 extern Widget Null;
 
@@ -116,8 +120,8 @@ struct TextFieldProps {
 	Property<bool> enabled;
 	Property<bool> readonly;
 	
-	Property<OnClickCallback> onchange;
-	Property<OnClickCallback> onsubmit;	
+	Property<OnChangeStringCallback> onchange;
+	Property<OnSubmitCallback> onsubmit;	
 };
 
 struct TextAreaProps {
@@ -230,7 +234,7 @@ struct ListBoxProps {
 	Property<int> x;
 	Property<int> y;
 	
-	Property<std::vector<OnClickCallback>> onselect;
+	Property<std::vector<OnClickCallback>> onselect; // wait why a vector???
 };
 
 struct TabGroupProps {
@@ -271,6 +275,8 @@ struct GroupPanelProps {
 
 struct ItemProps {
 	Property<std::string> title;
+	
+	Property<OnClickCallback> onclick;
 };
 
 

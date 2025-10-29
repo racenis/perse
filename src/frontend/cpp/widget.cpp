@@ -103,14 +103,19 @@ static void add_prop(perse_widget* widget, perse_name_t name,
 	perse_AddProperty(widget, p);
 }
 
+/*
+	TODO: use type safe union (std::variant) to roll all add_prop() into one
+	also change all the UserInfo callbacks into that type safe union type
+*/
+
 struct UserInfo {
 	OnClickCallback onclick;
+	OnClickCallback onsubmit;
+	
+	OnChangeStringCallback onchange_str;
 };
 
-static void add_prop(perse_widget* widget, perse_name_t name,
-                     Property<OnClickCallback> value) {
-	if (!value.set()) return;
-	
+static UserInfo* get_userinfo(perse_widget* widget) {
 	UserInfo* info;
 	if (widget->user) {
 		info = (UserInfo*)widget->user;
@@ -122,17 +127,58 @@ static void add_prop(perse_widget* widget, perse_name_t name,
 		};
 	}
 	
-	perse_property_t* p;
+	return info;
+}
+
+static void add_prop(perse_widget* widget, perse_name_t name,
+                     Property<OnClickCallback> value) {
+	if (!value.set()) return;
 	
+	UserInfo* info = get_userinfo(widget);
+	
+	perse_property_t* p;
 	switch (name) {
 		case PERSE_NAME_ON_CLICK:
 			info->onclick = value;
-			p = perse_CreatePropertyCallback([](perse_widget_t* w){
+			p = perse_CreatePropertyCallback([](perse_widget_t* w, perse_property_t*){
 				((UserInfo*)w->user)->onclick();
+			});
+		case PERSE_NAME_ON_SUBMIT:
+			info->onsubmit = value;
+			p = perse_CreatePropertyCallback([](perse_widget_t* w, perse_property_t*){
+				((UserInfo*)w->user)->onsubmit();
 			});
 		break;
 		default:
-			perse_Log("CPP:: unknwn CALLBACK enum: %i\n", name);
+			perse_Log("CPP:: unknwn CALLBACK enum for OnClickCallback: %i\n", name);
+			abort();
+	}
+	
+	p->name = name;
+	perse_AddProperty(widget, p);
+}
+
+static void add_prop(perse_widget* widget, perse_name_t name,
+                     Property<OnChangeStringCallback> value) {
+	if (!value.set()) return;
+	
+	UserInfo* info = get_userinfo(widget);
+	
+	perse_property_t* p;
+	switch (name) {
+		case PERSE_NAME_ON_CHANGE:
+			info->onchange_str = value;
+			p = perse_CreatePropertyCallback([](perse_widget_t* w, perse_property_t* v){
+				if (v->type != PERSE_TYPE_STRING) {
+					perse_Log("CPP:: property change callback got non-string for"
+					"add_prop(..., Property<OnChangeStringCallback>) function");
+					abort();
+				}
+				((UserInfo*)w->user)->onchange_str(v->string);
+			});
+		break;
+		default:
+			perse_Log("CPP:: unknwn CALLBACK enum for OnChangeStringCallback: %i\n", name);
 			abort();
 	}
 	
@@ -165,6 +211,9 @@ Widget ImageButton(ImageButtonProps props) {
 
 Widget TextField(TextFieldProps props) {
 	INIT_WIDGET(PERSE_WIDGET_TEXT_BOX)
+	
+	add_prop(widget, PERSE_NAME_TEXT, props.text);
+	add_prop(widget, PERSE_NAME_ON_CHANGE, props.onchange);
 	
 	return widget_class;
 }
@@ -239,6 +288,7 @@ Widget Item(ItemProps props) {
 	widget->type = PERSE_WIDGET_ITEM;
 	
 	add_prop(widget, PERSE_NAME_TITLE, props.title);
+	add_prop(widget, PERSE_NAME_ON_CLICK, props.onclick);
 	
 	// we'll also add icons, etc. later
 	
@@ -262,7 +312,7 @@ Widget VerticalLayout(AbsoluteLayoutProps props) {
 	return widget_class;
 }
 
-void temp_resize_callback(perse_widget*);
+void temp_resize_callback(perse_widget*, perse_property*);
 
 Widget Window(WindowProps props) {
 	perse_widget* widget;

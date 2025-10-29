@@ -12,7 +12,7 @@ namespace perse {
 static Widget(*root_func)() = nullptr;
 static perse_widget* current_root = nullptr;
 
-void temp_resize_callback(perse_widget* widget) {
+void temp_resize_callback(perse_widget* widget, perse_property*) {
 	std::cout << "resize callback called" << std::endl;
 	if (widget == current_root) Reflow();
 }

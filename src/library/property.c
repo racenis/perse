@@ -97,7 +97,7 @@ perse_property_t* perse_CreatePropertyString(const char* string) {
 /// Creates a new callback property.
 /// @param cb Callback function pointer to be copied into the new property.
 /// @return Pointer to new callback property.
-perse_property_t* perse_CreatePropertyCallback(void (*cb)(perse_widget_t*)) {
+perse_property_t* perse_CreatePropertyCallback(void (*cb)(perse_widget_t*, struct perse_property*)) {
 	perse_property_t* property = perse_AllocateProperty();
 	
 	property->type = PERSE_TYPE_CALLBACK;
@@ -140,11 +140,11 @@ void perse_CopyPropertyValue(perse_property_t* dst, perse_property_t* src) {
 			break;
 		case PERSE_TYPE_CALLBACK_ARRAY: {
 			int count = 0;
-			for (void (**s)(perse_widget_t*) = src->callback_array; *s; s++) count++;
+			for (void (**s)(perse_widget_t*, struct perse_property*) = src->callback_array; *s; s++) count++;
 			count++;
 			dst->callback_array = calloc(1, sizeof(void (*)(perse_widget_t*)) * count);
-			for (void (**s)(perse_widget_t*) = src->callback_array,
-				(**d)(perse_widget_t*) = dst->callback_array; *s;
+			for (void (**s)(perse_widget_t*, struct perse_property*) = src->callback_array,
+				(**d)(perse_widget_t*, struct perse_property*) = dst->callback_array; *s;
 					s++, d++) *d = *s;
 			} break;
 		case PERSE_TYPE_POINTER:
@@ -191,8 +191,8 @@ int perse_IsPropertyMatching(perse_property_t* p1, perse_property_t* p2) {
 		case PERSE_TYPE_CALLBACK:
 			return p1->callback == p2->callback;
 		case PERSE_TYPE_CALLBACK_ARRAY:
-			for (void (**c1)(perse_widget_t*) = p1->callback_array,
-				(**c2)(perse_widget_t*) = p2->callback_array; *c1 && *c2; c1++, c2++) {
+			for (void (**c1)(perse_widget_t*, struct perse_property*) = p1->callback_array,
+				(**c2)(perse_widget_t*, struct perse_property*) = p2->callback_array; *c1 && *c2; c1++, c2++) {
 					if (c1 != c2) return 0;
 				}
 			return 1;
