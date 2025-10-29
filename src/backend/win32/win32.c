@@ -294,6 +294,37 @@ static LRESULT CALLBACK perse_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
+LRESULT CALLBACK textbox_subclass_handler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {
+    perse_widget_t* widget = LookupWidget(GetDlgCtrlID(hwnd));
+	
+	switch (msg) {
+        case WM_KEYDOWN:
+            if (wParam == VK_RETURN) {
+				perse_property_t* p = prop(PERSE_NAME_ON_SUBMIT, widget);
+				if (p && p->type != PERSE_TYPE_CALLBACK) {
+					log("ERROR WIN32:: textbox_subclass_handler textbox on submit wrong type\n");
+				} else if (p) {
+					p->callback(widget, NULL);
+				}
+				
+                return 0;
+            }
+            break;
+            
+        case WM_CHAR:
+            if (wParam == VK_RETURN) {
+                return 0;
+            }
+            break;
+			
+		case WM_NCDESTROY:
+            RemoveWindowSubclass(hwnd, textbox_subclass_handler, uIdSubclass);
+            break;
+    }
+    
+	return DefSubclassProc(hwnd, msg, wParam, lParam);
+}
+
 PERSE_API void perse_impl_BackendCreateWidget(perse_widget_t* widget) {
 	switch (widget->type) {
 		case PERSE_WIDGET_INVALID:
@@ -602,6 +633,8 @@ PERSE_API void perse_impl_BackendCreateWidget(perse_widget_t* widget) {
 				return;
 			}
 
+			SetWindowSubclass(hwnd, textbox_subclass_handler, 0, 0);
+			
 			HFONT font = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 			SendMessage(hwnd, WM_SETFONT, (WPARAM)font, TRUE);
 			

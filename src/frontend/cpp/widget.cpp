@@ -214,6 +214,7 @@ Widget TextField(TextFieldProps props) {
 	
 	add_prop(widget, PERSE_NAME_TEXT, props.text);
 	add_prop(widget, PERSE_NAME_ON_CHANGE, props.onchange);
+	add_prop(widget, PERSE_NAME_ON_SUBMIT, props.onsubmit);
 	
 	return widget_class;
 }
