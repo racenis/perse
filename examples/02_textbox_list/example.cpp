@@ -1,6 +1,23 @@
 #include "../../src/frontend/cpp/perse.h"
 #include "../../src/frontend/cpp/hooks.h"
 
+/*
+
+	LIBPERSE EXAMPLE #02 -- Listbox and Textbox
+	
+	This example demonstrates the use of listboxes and textboxes.
+	
+	When entering text into the textbox and clicking on the 'Add' button, the
+	text will be added to the listbox and the textbox will be cleared.
+
+	The same behavior will occur when pressing the 'enter' key after inputting
+	text into the textbox.
+	
+	When selecting a text in the listbox and clicking on the 'Remove' button,
+	the selected listbox item will be removed from the listbox.
+
+*/
+
 using namespace perse;
 
 #include <iostream>

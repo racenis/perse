@@ -566,20 +566,12 @@ PERSE_API void perse_impl_BackendCreateWidget(perse_widget_t* widget) {
 			
 			
 			// TODO: do a check for parent type
-			
-			
+
 			TCITEM tie;
             tie.mask = TCIF_TEXT;
             
             tie.pszText = (char*)title; // this should be read only???
-            TabCtrl_InsertItem(widget->parent->system, 0, &tie);
-			
-			/*
-				this should have tab name property
-				
-				we should also add note book widget to hold this all together
-			*/
-			
+            TabCtrl_InsertItem(widget->parent->system, index_in_parent(widget), &tie);
 		} break;
 		
 		case PERSE_WIDGET_GROUP_PANEL: {
