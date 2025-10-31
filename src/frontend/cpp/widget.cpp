@@ -227,6 +227,7 @@ Widget TextArea(TextAreaProps props) {
 
 Widget Label(LabelProps props) {
 	INIT_WIDGET(PERSE_WIDGET_LABEL)
+	add_prop(widget, PERSE_NAME_TEXT, props.text);
 	
 	return widget_class;
 }
@@ -268,6 +269,11 @@ Widget TabPanel(TabPanelProps props) {
 	                    unset, unset, unset, unset,
 	                    (void**)&widget);
 	widget->type = PERSE_WIDGET_TAB_PANEL;
+	
+	// tab panels have no dimensions, since their dimensions are set by the
+	// parent tab group
+	
+	add_prop(widget, PERSE_NAME_TEXT, props.text);
 	
 	return widget_class;
 }

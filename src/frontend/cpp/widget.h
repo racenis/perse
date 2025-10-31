@@ -317,8 +317,10 @@ Widget CheckBox(CheckBoxProps);
 Widget RadioButton(RadioButtonProps);
 Widget ComboBox(ComboBoxProps);
 Widget ListBox(ListBoxProps);
+
 Widget TabGroup(TabGroupProps);
 Widget TabPanel(TabPanelProps);
+
 Widget GroupPanel(GroupPanelProps);
 
 Widget Item(ItemProps);

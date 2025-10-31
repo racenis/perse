@@ -138,6 +138,19 @@ perse_widget_t* LookupWidget(int index) {
 	return win32_widgets[index].widget;
 }
 
+void recursive_show(perse_widget_t* w) {
+	if (w->system) ShowWindow(w->system, SW_SHOW);
+	for (perse_widget_t* c = w->child; c; c = c->next){
+		recursive_show(c);
+	} 
+}
+
+void recursive_hide(perse_widget_t* w) {
+	if (w->system) ShowWindow(w->system, SW_HIDE);
+	for (perse_widget_t* c = w->child; c; c = c->next){
+		recursive_hide(c);
+	} 
+}
 
 static LRESULT CALLBACK perse_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	//log("WIN32:: received %hx\n", uMsg);
@@ -226,6 +239,33 @@ static LRESULT CALLBACK perse_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 		}
 	} break;
 
+	case WM_NOTIFY: {
+		int wmId = LOWORD(wParam);
+		int wmEvent = HIWORD(wParam);
+		
+		perse_widget_t* widget = LookupWidget(wmId);
+		
+		// ignore messages for uninitialized widgets
+		if (!widget->system) break;
+		
+		switch (widget->type) {
+			case PERSE_WIDGET_TAB_GROUP: {
+				int selection = TabCtrl_GetCurSel(widget->system);
+				log("cliclked on tab groop : %i \n", selection);
+				
+				int child = 0;
+				for (perse_widget_t* c = widget->child; c; c = c->next){
+					if (child == selection) {
+						recursive_show(c);
+					} else {
+						recursive_hide(c);
+					}
+					child++;
+				}
+			} break;
+		}
+	} break;
+	
 	case WM_SIZE: {
 		
 		int new_width = LOWORD(lParam);
@@ -481,8 +521,58 @@ PERSE_API void perse_impl_BackendCreateWidget(perse_widget_t* widget) {
 			}
 		} break;
 		
+		case PERSE_WIDGET_TAB_GROUP : {			
+			perse_widget_t* w = window(widget);
+			
+			HWND hwnd = CreateWindow( 
+				WC_TABCONTROL,
+				NULL,
+				WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
+				widget->actual_pos.x, widget->actual_pos.y,
+				widget->current_size.w, widget->current_size.h,
+				w->system,
+				(HMENU)(long long)AllocateIndex(widget),
+				(HINSTANCE)GetWindowLongPtr(w->system, GWLP_HINSTANCE), 
+				NULL
+			);
+			
+			if (hwnd == NULL) {
+				log("ERROR WIN32:: TAB_GROUP CreateWindow failed");
+				return;
+			}
+
+			HFONT font = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+			SendMessage(hwnd, WM_SETFONT, (WPARAM)font, TRUE);
+			
+			// sets selected tab to default (hardcoded to zero)
+			TabCtrl_SetCurSel(hwnd, 0);
+			PostMessage(w->system, WM_NOTIFY, (long long)widget->data, 
+				(LPARAM)&(NMHDR){.hwndFrom = hwnd, .idFrom = (long long)widget->data, .code = TCN_SELCHANGE});
+			
+			widget->system = hwnd;
+		} break;
+		
 		case PERSE_WIDGET_TAB_PANEL: {
-			// TODO: implement
+			perse_property_t* p = NULL;
+			const char* title = "libperse tab";
+			if (p = prop(PERSE_NAME_TEXT, widget)) {
+				if (p->type != PERSE_TYPE_STRING) {
+					log("ERROR WIN32:: TAB_PANEL property TEXT not string");
+				} else {
+					title = p->string;
+					p->changed = 0;
+				}
+			}
+			
+			
+			// TODO: do a check for parent type
+			
+			
+			TCITEM tie;
+            tie.mask = TCIF_TEXT;
+            
+            tie.pszText = (char*)title; // this should be read only???
+            TabCtrl_InsertItem(widget->parent->system, 0, &tie);
 			
 			/*
 				this should have tab name property
@@ -644,6 +734,43 @@ PERSE_API void perse_impl_BackendCreateWidget(perse_widget_t* widget) {
 			
 		} break;
 		
+		case PERSE_WIDGET_LABEL: {
+			perse_property_t* p = NULL;
+			const char* title = "libperse button";
+			if (p = prop(PERSE_NAME_TEXT, widget)) {
+				if (p->type != PERSE_TYPE_STRING) {
+					log("ERROR WIN32:: TEXT_BUTTON property TITLE not string");
+				} else {
+					title = p->string;
+					p->changed = 0;
+				}
+			}
+			
+			perse_widget_t* w = window(widget);
+			
+			HWND hwnd = CreateWindow( 
+				"STATIC",
+				title,
+				WS_CHILD | WS_VISIBLE,
+				widget->actual_pos.x, widget->actual_pos.y,
+				widget->current_size.w, widget->current_size.h,
+				w->system,
+				(HMENU)(long long)AllocateIndex(widget),
+				(HINSTANCE)GetWindowLongPtr(w->system, GWLP_HINSTANCE), 
+				NULL
+			);
+			
+			if (hwnd == NULL) {
+				log("ERROR WIN32:: LABEL CreateWindow failed");
+				return;
+			}
+
+			HFONT font = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+			SendMessage(hwnd, WM_SETFONT, (WPARAM)font, TRUE);
+			
+			widget->system = hwnd;
+		} break;
+		
 		case PERSE_WIDGET_DATE_PICKER: {
 			// TODO: implement
 			
@@ -751,11 +878,16 @@ PERSE_API void perse_impl_BackendDestroyWidget(perse_widget_t* widget) {
 			}
 		} break;
 		
+		case PERSE_WIDGET_TAB_PANEL:
+			// doesn't have a win32 control attached
+			break;
+		
 		case PERSE_WIDGET_WINDOW:
 		case PERSE_WIDGET_MENU_BAR:
 		case PERSE_WIDGET_STATUS_BAR:
 		
-		case PERSE_WIDGET_TAB_PANEL:
+		
+		case PERSE_WIDGET_TAB_GROUP:
 		
 		case PERSE_WIDGET_GROUP_PANEL:
 		case PERSE_WIDGET_SCROLL_PANEL:
@@ -766,6 +898,8 @@ PERSE_API void perse_impl_BackendDestroyWidget(perse_widget_t* widget) {
 		case PERSE_WIDGET_COMBO_BOX:
 		
 		case PERSE_WIDGET_TEXT_BOX:
+		
+		case PERSE_WIDGET_LABEL:
 		
 		case PERSE_WIDGET_DATE_PICKER:
 		case PERSE_WIDGET_IP_ADDRESS_PICKER:
@@ -802,10 +936,33 @@ PERSE_API void perse_impl_BackendSetProperty(perse_widget_t* widget, perse_prope
 			break;
 		
 		case PERSE_WIDGET_WINDOW:
+			// TODO: implement
 		case PERSE_WIDGET_MENU_BAR:
 		case PERSE_WIDGET_STATUS_BAR:
 		
-		case PERSE_WIDGET_TAB_PANEL:
+		case PERSE_WIDGET_TAB_PANEL: switch (p->name) {
+			case PERSE_NAME_TITLE: {
+				
+				
+				const char* title = "perse tab";
+				if (p->type != PERSE_TYPE_STRING) {
+					log("ERROR WIN32:: TAB_PANEL property TEXT not string");
+				} else {
+					title = p->string;
+					p->changed = 0;
+				}
+				
+				// TODO: assert that parent is group && inited
+				perse_widget_t* parent = widget->parent;
+				
+				TCITEM tie;
+				tie.mask = TCIF_TEXT;
+				tie.pszText = (char*)title;
+				TabCtrl_SetItem(parent->system, index_in_parent(widget), &tie);
+				
+			} break;
+		} break;
+		
 		
 		case PERSE_WIDGET_ITEM: {
 			if (!widget->parent) log("ERROR WIN32:: item has no parent");
@@ -885,6 +1042,7 @@ PERSE_API void perse_impl_BackendSetProperty(perse_widget_t* widget, perse_prope
 		
 		case PERSE_WIDGET_GROUP_PANEL:
 		case PERSE_WIDGET_SCROLL_PANEL:
+			break;
 		
 		case PERSE_WIDGET_ARROW_BUTTON:
 		case PERSE_WIDGET_TEXT_BUTTON:
@@ -906,6 +1064,12 @@ PERSE_API void perse_impl_BackendSetProperty(perse_widget_t* widget, perse_prope
 				}
 			}
 		} break;
+		
+		case PERSE_WIDGET_LABEL:
+			if (p->name == PERSE_NAME_TEXT && p->type == PERSE_TYPE_STRING) {
+				SetWindowText(widget->system,  p->string);
+			}
+			break;
 		
 		case PERSE_WIDGET_DATE_PICKER:
 		case PERSE_WIDGET_IP_ADDRESS_PICKER:
@@ -937,7 +1101,8 @@ PERSE_API void perse_impl_BackendSetSizePos(perse_widget_t* widget) {
 			break;
 			
 		case PERSE_WIDGET_ITEM:
-			// also fake item
+		case PERSE_WIDGET_TAB_PANEL:
+			// also fake items
 			break;
 		
 		// I think that for these things in here in the win32 we could just have
@@ -951,7 +1116,7 @@ PERSE_API void perse_impl_BackendSetSizePos(perse_widget_t* widget) {
 		case PERSE_WIDGET_MENU_BAR:
 		case PERSE_WIDGET_STATUS_BAR:
 		
-		case PERSE_WIDGET_TAB_PANEL:
+		
 		
 		case PERSE_WIDGET_GROUP_PANEL:
 		case PERSE_WIDGET_SCROLL_PANEL:
@@ -960,6 +1125,7 @@ PERSE_API void perse_impl_BackendSetSizePos(perse_widget_t* widget) {
 		case PERSE_WIDGET_ARROW_BUTTON:
 		case PERSE_WIDGET_TEXT_BUTTON:
 		case PERSE_WIDGET_TEXT_BOX:
+		case PERSE_WIDGET_TAB_GROUP:
 			MoveWindow(
 				widget->system, 
 				widget->actual_pos.x, widget->actual_pos.y,
