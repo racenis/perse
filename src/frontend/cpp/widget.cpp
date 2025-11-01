@@ -291,7 +291,7 @@ Widget Item(ItemProps props) {
 	perse_widget* widget;
 	
 	// didn't really think this one through..
-	Widget widget_class(d, d, d, d, d, d, d, d, (void**)&widget);
+	Widget widget_class(d, d, d, d, props.width, d, d, d, (void**)&widget);
 	widget->type = PERSE_WIDGET_ITEM;
 	
 	add_prop(widget, PERSE_NAME_TITLE, props.title);
@@ -300,6 +300,28 @@ Widget Item(ItemProps props) {
 	// we'll also add icons, etc. later
 	
 	// also some kind of data pointer??
+	
+	return widget_class;
+}
+
+Widget MenuBar(ItemProps) {
+	Property<int> d;
+	
+	perse_widget* widget;
+	
+	Widget widget_class(d, d, d, d, d, d, d, d, (void**)&widget);
+	widget->type = PERSE_WIDGET_MENU_BAR;
+	
+	return widget_class;
+}
+
+Widget StatusBar(ItemProps) {
+	Property<int> d;
+	
+	perse_widget* widget;
+	
+	Widget widget_class(d, d, d, d, d, d, d, d, (void**)&widget);
+	widget->type = PERSE_WIDGET_STATUS_BAR;
 	
 	return widget_class;
 }

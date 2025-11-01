@@ -56,6 +56,14 @@ static perse_widget_t* parent(perse_widget_t* widg) {
 	return widg;
 }
 
+// finds if there exists an ancestor of a type
+static perse_widget_t* ancestor_of_type(perse_widget_t* widg, perse_type_t type) {
+	while (widg && widg->type != type) {
+		widg = widg->parent;
+	}
+	return widg;
+}
+
 // finds a given property
 static perse_property_t* prop(perse_name_t name, perse_widget_t* widg) {
 	perse_property_t* p = widg->property;
@@ -463,20 +471,44 @@ PERSE_API void perse_impl_BackendCreateWidget(perse_widget_t* widget) {
 			ShowWindow(hwnd, SW_NORMAL);
 		} break;
 		case PERSE_WIDGET_MENU_BAR: {
-			// TODO: implement
 			
-			/*
-				we need to add menu bar item widget!!
-				then we can use that to assemble the menu bar
-			*/
+			if (widget->parent->type != PERSE_WIDGET_WINDOW) {
+				log("ERROR WIN32:: menubar not attach to window?\n");
+			}
+			
+			
+			
+			widget->system = CreateMenu();
+			SetMenu(widget->parent->system, widget->system);
+			DrawMenuBar(widget->parent->system);
 			
 		} break;
 		case PERSE_WIDGET_STATUS_BAR: {
-			// TODO: implement
+			perse_widget_t* w = window(widget);
 			
-			/*
-				idk what to even put in here
-			*/
+			HWND hwnd = CreateWindow( 
+				STATUSCLASSNAME,
+				NULL,
+				WS_CHILD | WS_VISIBLE | SBARS_SIZEGRIP,
+				widget->actual_pos.x, widget->actual_pos.y,
+				widget->current_size.w, widget->current_size.h,
+				w->system,
+				(HMENU)(long long)AllocateIndex(widget),
+				(HINSTANCE)GetWindowLongPtr(w->system, GWLP_HINSTANCE), 
+				NULL
+			);
+			
+			if (hwnd == NULL) {
+				log("ERROR WIN32:: TAB_GROUP CreateWindow failed");
+				return;
+			}
+
+			//HFONT font = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+			//SendMessage(hwnd, WM_SETFONT, (WPARAM)font, TRUE);
+			
+			
+			
+			widget->system = hwnd;
 			
 		} break;
 		
@@ -489,6 +521,35 @@ PERSE_API void perse_impl_BackendCreateWidget(perse_widget_t* widget) {
 				perse_property_t* p = prop(PERSE_NAME_TITLE, c);
 				log("child: %s\n", p->string);
 			}*/
+			
+			perse_widget_t* parent = ancestor_of_type(widget, PERSE_WIDGET_MENU_BAR);
+			if (parent) {
+				perse_property_t* p = NULL;
+				
+				const char* title = "list item";
+				if (p = prop(PERSE_NAME_TITLE, widget)) {
+					if (p->type != PERSE_TYPE_STRING) {
+						log("ERROR WIN32:: WIDGET_ITEM property TITLE not string");
+					} else {
+						title = p->string;
+						p->changed = 0;
+					}
+				}
+				
+				if (widget->parent->type == PERSE_WIDGET_MENU_BAR) {
+					widget->system = CreateMenu();
+					AppendMenu(widget->parent->system, MF_POPUP, (UINT_PTR)widget->system, title);
+				} else {
+					widget->system = (void*)(long long)1; // just any non-zero value
+					AppendMenu(widget->parent->system, MF_STRING, AllocateIndex(widget), title);
+				}
+
+				perse_widget_t* w = window(widget);
+				DrawMenuBar(w->system);
+				
+				break;
+			}
+			
 			
 			switch (widget->parent->type) {
 			case PERSE_WIDGET_LIST_BOX: {
@@ -510,10 +571,53 @@ PERSE_API void perse_impl_BackendCreateWidget(perse_widget_t* widget) {
 				int insert = SendMessage(listbox, LB_INSERTSTRING, (WPARAM)index, (LPARAM)title);
 				SendMessage(listbox, LB_SETITEMDATA, insert, (LPARAM)widget);
 				
-				//widget->system = (void*)SendMessage(, LB_ADDSTRING, 0, (LPARAM)title);
-				
 				// system needs to be set to non-null
 				widget->system = (void*)(long long)index + 1;
+			} break;
+
+			case PERSE_WIDGET_STATUS_BAR: {
+				perse_property_t* p = NULL;
+
+				int sizes[16];
+				int parts = 0;
+				int total = 0;
+				perse_widget_t* status = widget->parent->child;
+				while (status) {
+					// we're assuming that min size == max size (set like
+					// absolute width in the frontend)
+					sizes[parts] = total + status->constraint_size.min.w;
+					
+					total += status->constraint_size.min.w;
+					
+					// handle the case for stretching to rest of the window
+					if (status->constraint_size.min.w < 0) {
+						sizes[parts] = -1;
+					}
+					
+					status = status->next;
+					parts++;
+				}
+				
+				SendMessage(widget->parent->system, SB_SETPARTS, parts, (LPARAM)sizes);
+				
+				status = widget->parent->child;
+				for (int i = 0; status; i++, status = status->next) {
+										
+					const char* title = "status item";
+					if (p = prop(PERSE_NAME_TITLE, status)) {
+						if (p->type != PERSE_TYPE_STRING) {
+							log("ERROR WIN32:: WIDGET_ITEM property TITLE not string");
+						} else {
+							title = p->string;
+							p->changed = 0;
+						}
+					}
+
+					SendMessage(widget->parent->system, SB_SETTEXT, i, (LPARAM)title);
+				}
+
+				// system needs to be set to non-null
+				widget->system = (void*)(long long)1;
 			} break;
 			default:
 				log("ERROR WIN32:: item parent unsupported type '%i'\n",
@@ -572,6 +676,8 @@ PERSE_API void perse_impl_BackendCreateWidget(perse_widget_t* widget) {
             
             tie.pszText = (char*)title; // this should be read only???
             TabCtrl_InsertItem(widget->parent->system, index_in_parent(widget), &tie);
+			
+			widget->system = (void*)(long long)1; // dummy value
 		} break;
 		
 		case PERSE_WIDGET_GROUP_PANEL: {

@@ -276,6 +276,8 @@ struct GroupPanelProps {
 struct ItemProps {
 	Property<std::string> title;
 	
+	Property<int> width;
+	
 	Property<OnClickCallback> onclick;
 };
 
@@ -324,6 +326,9 @@ Widget TabPanel(TabPanelProps);
 Widget GroupPanel(GroupPanelProps);
 
 Widget Item(ItemProps);
+
+Widget MenuBar(ItemProps);
+Widget StatusBar(ItemProps);
 
 Widget AbsoluteLayout(AbsoluteLayoutProps);
 Widget HorizontalLayout(AbsoluteLayoutProps);

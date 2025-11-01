@@ -15,13 +15,13 @@ typedef enum {
 	PERSE_WIDGET_FLEX_LAYOUT,		// TODO: ditto
 	
 	PERSE_WIDGET_WINDOW,
-	PERSE_WIDGET_MENU_BAR,			// TODO: implement
-	PERSE_WIDGET_STATUS_BAR,		// TODO: implement
+	PERSE_WIDGET_MENU_BAR,
+	PERSE_WIDGET_STATUS_BAR,
 	
 	PERSE_WIDGET_ITEM,				//< pseudowidget
 	
 	PERSE_WIDGET_TAB_PANEL,
-	PERSE_WIDGET_TAB_GROUP,			// TODO: check if we actually need it
+	PERSE_WIDGET_TAB_GROUP,
 	
 	PERSE_WIDGET_PANEL,				// TODO: implement
 	
@@ -40,7 +40,7 @@ typedef enum {
 	PERSE_WIDGET_TEXT_BOX,
 	PERSE_WIDGET_TEXT_AREA,			// TODO: implement
 	
-	PERSE_WIDGET_LABEL,				// TODO: implement
+	PERSE_WIDGET_LABEL,
 	
 	PERSE_WIDGET_DATE_PICKER,		// leave unimplemented, for now
 	PERSE_WIDGET_IP_ADDRESS_PICKER,	// ditto
@@ -48,7 +48,7 @@ typedef enum {
 	PERSE_WIDGET_IMAGE,			// TODO: implement
 	PERSE_WIDGET_CANVAS,		// might actually be rolled into image, we'll see
 	
-	PERSE_WIDGET_PROGRESS_BAR,
+	PERSE_WIDGET_PROGRESS_BAR,	// TODO: implement.
 	PERSE_WIDGET_PROPERTY_LIST,	// TODO: implement. will be EXTREMELY tricky 
 	
 	PERSE_WIDGET_TREE_VIEW		// TODO: implement. will be VERY tricky
