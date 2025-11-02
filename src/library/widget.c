@@ -70,34 +70,29 @@ perse_widget_t* perse_AllocateWidget() {
 	return widget;
 }
 
-/// Destroys a widget.
-/// To be used for destroying widgets created by perse_AllocateWidget() or other
-/// widget creation functions.
-/// All of the properties of the widget and its children will be destroyed as
-/// well. If you don't want the children to be destroyed, set their parent to 
-/// NULL or some other widget.
-void perse_DestroyWidget(perse_widget_t* widget) {
+static void destroy_recursive(perse_widget_t* widget, char parent_persists) {
+		
+	// delete all child objects
+	for (perse_widget_t* child = widget->child; child;) {
+		perse_widget_t* next = child->next;
+		
+		destroy_recursive(child, 0);
+		child = next;
+	}
 	
 	// some widget types need the parent pointer to be intact in order to be
-	// properly cleared out of the backend (like the win32 list items)
+	// properly cleared out of the backend (like the win32 list items), so we
+	// destroy them here, before removing them from their parent
 	if (widget->system) {
 		perse_BackendDestroyWidget(widget);
 	}
 	
-	// *now* we can clear out the parent pointer
-	if (widget->parent) {
+	// at this point, if the parent is also being destroyed, then the parent's 
+	// child list is also partially destroyed and so calling perse_SetParent()
+	// with a NULL parent will segfault the program, so we make sure that it
+	// won't be called in that case
+	if (parent_persists && widget->parent) {
 		perse_SetParent(widget, NULL);
-	}
-	
-	for (perse_widget_t* child = widget->child; child;) {
-		perse_widget_t* next = child->next;
-		// at this point the child list is partially destroyed and so calling
-		// perse_SetParent() with a NULL parent will segfault the program, so we
-		// make sure that it won't be called
-		child->parent = NULL;
-		
-		perse_DestroyWidget(child);
-		child = next;
 	}
 	
 	for (perse_property_t* property = widget->property; property;) {
@@ -112,6 +107,16 @@ void perse_DestroyWidget(perse_widget_t* widget) {
 	
 	memset(widget, 0, sizeof(*widget));
 	free(widget);
+}
+
+/// Destroys a widget.
+/// To be used for destroying widgets created by perse_AllocateWidget() or other
+/// widget creation functions.
+/// All of the properties of the widget and its children will be destroyed as
+/// well. If you don't want the children to be destroyed, set their parent to 
+/// NULL or some other widget.
+void perse_DestroyWidget(perse_widget_t* widget) {
+	destroy_recursive(widget, 1);
 }
 
 /// Sets the parent of a widget.

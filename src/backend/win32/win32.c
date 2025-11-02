@@ -1134,8 +1134,6 @@ PERSE_API void perse_impl_BackendSetProperty(perse_widget_t* widget, perse_prope
 					widget->parent->type);
 			}
 		
-			// TODO: do a switch here based on parent type
-		
 		} break;
 		
 		case PERSE_WIDGET_GROUP_PANEL:
